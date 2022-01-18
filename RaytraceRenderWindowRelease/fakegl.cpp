@@ -283,12 +283,32 @@ void FakeGL::Color3f(float red, float green, float blue)
     } // Color3f()
 
 // sets material properties
+//void FakeGL::Materialf(unsigned int parameterName, const float parameterValue)
+//    { // Materialf()
+//        if(parameterName & FAKEGL_SHININESS){
+//            shinessMaterial = parameterValue;
+//        }
+
+//    } // Materialf()
+
 void FakeGL::Materialf(unsigned int parameterName, const float parameterValue)
     { // Materialf()
-        if(parameterName & FAKEGL_SHININESS){
-            shinessMaterial = parameterValue;
-        }
+    if (parameterName & FAKEGL_AMBIENT)
+        ambientMaterial[0] = ambientMaterial[1] = ambientMaterial[2] = parameterValue;
+
+    if (parameterName & FAKEGL_DIFFUSE)
+        diffuseMaterial[0] = diffuseMaterial[1] = diffuseMaterial[2] = parameterValue;
+
+    if (parameterName & FAKEGL_SPECULAR)
+        specularMaterial[0] = specularMaterial[1] = specularMaterial[2] = parameterValue;
+
+    if (parameterName & FAKEGL_EMISSION)
+        emissionMaterial[0] = emissionMaterial[1] = emissionMaterial[2] = parameterValue;
+
+    if (parameterName & FAKEGL_SHININESS)
+        shinessMaterial = parameterValue;
     } // Materialf()
+
 
 void FakeGL::Materialfv(unsigned int parameterName, const float *parameterValues)
     { // Materialfv()
@@ -771,11 +791,25 @@ void FakeGL::RasteriseTriangle(screenVertexWithAttributes &vertex0, screenVertex
     Cartesian3 eyeDir{0,0,0};
 //    auto eyeDir = this->modelViewMat * eye;
 
-    Cartesian3 vl;
-    if (lightPosition.w != 0)
-       vl = lightPosition.Vector() / lightPosition.w;
-    else
-       vl = lightPosition.Vector();
+    Cartesian3 vl0, vl1, vl2;
+    if (lightPosition.w != 0){ // spot light
+//        vl0 = vertex0.position - lightPosition.Vector() / lightPosition.w;
+//        vl1 = vertex1.position - lightPosition.Vector() / lightPosition.w;
+//        vl2 = vertex2.position - lightPosition.Vector() / lightPosition.w;
+
+          vl0 =lightPosition.Vector() / lightPosition.w -  vertex0.position;
+          vl1 =lightPosition.Vector() / lightPosition.w - vertex1.position;
+          vl2 =lightPosition.Vector() / lightPosition.w - vertex2.position;
+
+
+
+    }
+    else{ // parallarl light
+
+        vl0 = lightPosition.Vector();
+        vl1 = lightPosition.Vector();
+        vl2 = lightPosition.Vector();
+    }
 
     v0Normal = v0Normal.unit();
     v1Normal = v1Normal.unit();
@@ -790,9 +824,9 @@ void FakeGL::RasteriseTriangle(screenVertexWithAttributes &vertex0, screenVertex
 
 
 
-    auto v0reflectDir = reflect(vl, v0Normal);
-    auto v1reflectDir = reflect(vl, v1Normal);
-    auto v2reflectDir = reflect(vl, v2Normal);
+    auto v0reflectDir = reflect(vl0, v0Normal);
+    auto v1reflectDir = reflect(vl1, v1Normal);
+    auto v2reflectDir = reflect(vl2, v2Normal);
 
 
 
@@ -803,13 +837,13 @@ void FakeGL::RasteriseTriangle(screenVertexWithAttributes &vertex0, screenVertex
         float v1ambient = this->ambietLight[i]*vertex1.ambientMaterial[i];
         float v2ambient = this->ambietLight[i]*vertex2.ambientMaterial[i];
 
-        float v0diffuse = diffuseLight[i]*vertex0.diffuseMaterial[i]* std::max(v0Normal.dot(vl), 0.0f);
-        float v1diffuse = diffuseLight[i]*vertex1.diffuseMaterial[i]* std::max(v1Normal.dot(vl), 0.0f);
-        float v2diffuse = diffuseLight[i]*vertex2.diffuseMaterial[i]* std::max(v2Normal.dot(vl), 0.0f);
+        float v0diffuse = diffuseLight[i]*vertex0.diffuseMaterial[i]* std::max(v0Normal.dot(vl0), 0.0f);
+        float v1diffuse = diffuseLight[i]*vertex1.diffuseMaterial[i]* std::max(v1Normal.dot(vl1), 0.0f);
+        float v2diffuse = diffuseLight[i]*vertex2.diffuseMaterial[i]* std::max(v2Normal.dot(vl2), 0.0f);
 
         float v0specular = specularLight[i]*vertex0.specularMaterial[i]*std::pow(std::max(v0reflectDir.dot(eyeDirV0), 0.0f), this->shinessMaterial);
         float v1specular = specularLight[i]*vertex1.specularMaterial[i]*std::pow(std::max(v1reflectDir.dot(eyeDirV1), 0.0f), this->shinessMaterial);
-        auto v2specular = specularLight[i]*vertex2.specularMaterial[i]*std::pow(std::max(v2reflectDir.dot(eyeDirV2), 0.0f), this->shinessMaterial);
+        float v2specular = specularLight[i]*vertex2.specularMaterial[i]*std::pow(std::max(v2reflectDir.dot(eyeDirV2), 0.0f), this->shinessMaterial);
 
         vertex0Light[i] += v0ambient + v0diffuse + v0specular+ this->emissionMaterial[i];
 
@@ -893,7 +927,7 @@ void FakeGL::RasteriseTriangle(screenVertexWithAttributes &vertex0, screenVertex
                        interplDiffuseMaterial[i] = alpha*vertex0.diffuseMaterial[i] + beta * vertex1.diffuseMaterial[i] + gamma*vertex2.diffuseMaterial[i];
                        interplspecularMastrial[i] = alpha*vertex0.specularMaterial[i] + beta *vertex1.specularMaterial[i] + gamma*vertex2.specularMaterial[i];
                    }
-
+                   Cartesian3 vl = interplVertex - lightPosition.Vector();
                    auto lightReflect = reflect(vl, interplNormal);
 
                    eyeDir = {0,0,0};
