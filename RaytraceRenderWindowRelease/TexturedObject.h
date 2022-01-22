@@ -44,6 +44,7 @@
 // the image class for a texture
 #include "RGBAImage.h" 
 #include "fakegl.h"
+
 class TexturedObject
     { // class TexturedObject
     public:

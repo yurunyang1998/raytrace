@@ -48,7 +48,7 @@ class RaytraceRenderWidget : public QOpenGLWidget
 	RaytraceRenderWidget
 			(
 	 		// the geometric object to show
-			TexturedObject 		*newTexturedObject,
+            TexturedObject      *newTexturedObject,
 			// the render parameters to use
 			RenderParameters 	*newRenderParameters,
 			// parent widget in visual hierarchy

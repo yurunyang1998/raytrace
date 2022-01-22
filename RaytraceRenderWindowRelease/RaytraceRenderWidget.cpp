@@ -214,6 +214,11 @@ void RaytraceRenderWidget::paintFakeGL(){
     // routine that generates the image
 void RaytraceRenderWidget::Raytrace()
     { // RaytraceRenderWidget::Raytrace()
+
+
+
+
+
 	// This is where you will invoke your raytracing
     } // RaytraceRenderWidget::Raytrace()
     
