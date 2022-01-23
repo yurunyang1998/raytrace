@@ -403,6 +403,8 @@ class FakeGL
     // process a single fragment
     void ProcessFragment();
 
+    void raytrace();
+
     }; // class FakeGL
 
 // standard routine for dumping the entire FakeGL context (except for texture / image)

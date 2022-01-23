@@ -988,6 +988,25 @@ void FakeGL::ProcessFragment()
 
     } // ProcessFragment()
 
+
+
+
+void FakeGL::raytrace(){
+
+
+
+
+
+}
+
+
+
+
+
+
+
+
+
 // standard routine for dumping the entire FakeGL context (except for texture / image)
 std::ostream &operator << (std::ostream &outStream, FakeGL &fakeGL)
     { // operator <<
