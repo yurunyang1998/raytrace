@@ -53,37 +53,37 @@ public:
 
 
 
-class Sphere: public hitable{
-public:
-    double radius;
-    Cartesian3 position, emission, color;
+//class Sphere: public hitable{
+//public:
+//    double radius;
+//    Cartesian3 position, emission, color;
 
-    Sphere(double radius_, Cartesian3 position_, Cartesian3 emission_, Cartesian3 color_, Refl_t rf_):
-        radius(radius_),position(position_),emission(emission_),color(color_){
-        objType = 1;
-        emitte = emission;
-        reflectType = rf_;
-    }
+//    Sphere(double radius_, Cartesian3 position_, Cartesian3 emission_, Cartesian3 color_, Refl_t rf_):
+//        radius(radius_),position(position_),emission(emission_),color(color_){
+//        objType = 1;
+//        emitte = emission;
+//        reflectType = rf_;
+//    }
 
-    bool hit(Ray r, float min_t, float max_t, hit_record &rec){
-        Cartesian3 oc = position-r.origin();
-        double t, eps=0.0001, b = oc.dot(r.direction()), det=b*b-oc.dot(oc)+radius*radius;
-        if(det<0)
-            return false;
-        else
-            det = sqrt(det);
-       t = (t=b-det)>eps ? t:((t-b+det)>eps ?t:0);
-       if(t<min_t || t>max_t){
-           return false;
-       }
-       rec.hitPoint = r.at(t);
-       rec.t = t;
-       rec.objptr=this;
-       return true;
+//    bool hit(Ray r, float min_t, float max_t, hit_record &rec){
+//        Cartesian3 oc = position-r.origin();
+//        double t, eps=0.0001, b = oc.dot(r.direction()), det=b*b-oc.dot(oc)+radius*radius;
+//        if(det<0)
+//            return false;
+//        else
+//            det = sqrt(det);
+//       t = (t=b-det)>eps ? t:((t-b+det)>eps ?t:0);
+//       if(t<min_t || t>max_t){
+//           return false;
+//       }
+//       rec.hitPoint = r.at(t);
+//       rec.t = t;
+//       rec.objptr=this;
+//       return true;
 
-    }
+//    }
 
-};
+//};
 
 
 

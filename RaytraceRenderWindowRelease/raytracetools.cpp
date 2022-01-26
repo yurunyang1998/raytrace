@@ -40,40 +40,82 @@ double erand48(int X){
 //}
 
 
-bool hitList::hit(Ray r, float min_t, float max_t, hit_record &rec){
+//bool hitList::hit(Ray r, float min_t, float max_t, hit_record &rec){
 
-    bool hittedAnything = false;
-    for(auto obj : this->objects){
-        if(obj->hit(r, min_t, max_t, rec)){
-           max_t = rec.t; // max_t means the closest obj so far
-           hittedAnything = true;
+//    bool hittedAnything = false;
+//    for(auto obj : this->objects){
+//        if(obj->hit(r, min_t, max_t, rec)){
+//           max_t = rec.t; // max_t means the closest obj so far
+//           hittedAnything = true;
 
-        }
-    }
-    return hittedAnything;
+//        }
+//    }
+//    return hittedAnything;
 
-}
+//}
+
+
+struct Sphere {
+  double rad;       // radius
+  Cartesian3 position, emitte, color;      // position, emission, color
+  Refl_t reflectType;      // reflection type (DIFFuse, SPECular, REFRactive)
+  int objType=1;
+  Sphere(double rad_, Cartesian3 p_, Cartesian3 e_, Cartesian3 c_, Refl_t refl_):
+    rad(rad_), position(p_), emitte(e_), color(c_), reflectType(refl_) {}
+
+  double intersect(Ray &r) const { // returns distance, 0 if nohit
+    Cartesian3 op = position-r.origin() ; // Solve t^2*d.d + 2*t*(o-p).d + (o-p).(o-p)-R^2 = 0
+    double t, eps=1e-4, b=op.dot(r.direction()), det=b*b-op.dot(op)+rad*rad;
+    if (det<0) return 0; else det=sqrt(det);
+    return (t=b-det)>eps ? t : ((t=b+det)>eps ? t : 0);
+  }
+};
+
+Sphere spheres[] = {//Scene: radius, position, emission, color, material
+                    Sphere(1e5, Cartesian3( 1e5+1,40.8,81.6), Cartesian3(),Cartesian3(.75,.25,.25),DIFF),//Left
+                       Sphere(1e5, Cartesian3(-1e5+99,40.8,81.6),Cartesian3(),Cartesian3(.25,.25,.75),DIFF),//Rght
+                       Sphere(1e5, Cartesian3(50,40.8, 1e5),     Cartesian3(),Cartesian3(.75,.75,.75),DIFF),//Back
+                       Sphere(1e5, Cartesian3(50,40.8,-1e5+170), Cartesian3(),Cartesian3(),           DIFF),//Frnt
+                       Sphere(1e5, Cartesian3(50, 1e5, 81.6),    Cartesian3(),Cartesian3(.75,.75,.75),DIFF),//Botm
+                       Sphere(1e5, Cartesian3(50,-1e5+81.6,81.6),Cartesian3(),Cartesian3(.75,.75,.75),DIFF),//Top
+                       Sphere(16.5,Cartesian3(27,16.5,47),       Cartesian3(),Cartesian3(1,1,1)*.999, SPEC),//Mirr
+                       Sphere(16.5,Cartesian3(73,16.5,78),       Cartesian3(),Cartesian3(1,1,1)*.999, REFR),//Glas
+                       Sphere(600, Cartesian3(50,681.6-.27,81.6),Cartesian3(12,12,12),  Cartesian3(), DIFF)
+ };
+
+bool intersect(Ray &r, double &t, int &id){
+   double n=sizeof(spheres)/sizeof(Sphere), d, inf=t=1e20;
+   for(int i=int(n);i--;) if((d=spheres[i].intersect(r))&&d<t){t=d;id=i;}
+   return t<inf;
+ }
+
 
 Cartesian3 RayTrace::radiance(Ray &r, int depth, hitList &world, int Xi){
 
-    hit_record rec;
-    if(!world.hit(r,0,INT_MAX,rec)){
+//    hit_record rec;
+//    if(!world.hit(r,0,INT_MAX,rec)){
+//        return Cartesian3();
+//    }
+//    auto hittedObj = rec.objptr;
+
+    double t;
+    int id=0;
+    if(!intersect(r, t, id))
         return Cartesian3();
-    }
-    auto hittedObj = rec.objptr;
+     Sphere * hittedObj = &spheres[id];
     if(++depth>5){
         //TODO::russian roulette
         return Cartesian3();
     }
     Cartesian3 n,nl, color; //n means normal, nl means to inside or outside
-    Cartesian3 hitPoint = rec.hitPoint;
+    Cartesian3 hitPoint = r.origin()+r.direction()*t;
     if(hittedObj->objType==0) {        // triangle
-      n = hittedObj->normal;
-      nl = hittedObj->normal.dot(r.direction())?hittedObj->normal:hittedObj->normal*-1;
+//      n = hittedObj->normal;
+//      nl = hittedObj->normal.dot(r.direction())?hittedObj->normal:hittedObj->normal*-1;
     }
     else if(hittedObj->objType==1){ // sphere
         Sphere  * sphereobj = dynamic_cast<Sphere*>(hittedObj);
-        Cartesian3 x=r.origin()+r.direction()*rec.t;
+        Cartesian3 x= hitPoint;
         n=(x-sphereobj->position).unit();
         nl=n.dot(r.direction())<0?n:n*-1;
         color = sphereobj->color;
@@ -85,10 +127,10 @@ Cartesian3 RayTrace::radiance(Ray &r, int depth, hitList &world, int Xi){
         double r2 = erand48(1);
         double r2s = sqrt(r2);
         Cartesian3 w=nl;
-        Cartesian3 u=((fabs(w.x)>.1?Cartesian3(0,1,0):Cartesian3(1,-w.z,w.y))).unit();
-        Cartesian3 v = Cartesian3(w.y*u.z-w.z*u.y, w.z*u.x-w.x*u.z, w.x*u.y-w.y*u.x);
+        Cartesian3 u=((fabs(w.x)>.1?Cartesian3(0,1,0):Cartesian3(1,0,0))%w).unit();
+        Cartesian3 v = w%u;
         Cartesian3 d = (u*cos(r1)*r2s + v*sin(r1)*r2s + w*sqrt(1-r2)).unit();
-        Ray outputRay(rec.hitPoint, d);
+        Ray outputRay(hitPoint, d);
         Cartesian3 a;
         auto pixelColor = radiance(outputRay, depth, world, Xi);
         return  hittedObj->emitte+ color.mult(pixelColor);
@@ -116,41 +158,9 @@ Cartesian3 RayTrace::radiance(Ray &r, int depth, hitList &world, int Xi){
 
 }
 
-//struct Sphere {
-//  double rad;       // radius
-//  Cartesian3 p, e, c;      // position, emission, color
-//  Refl_t refl;      // reflection type (DIFFuse, SPECular, REFRactive)
-//  Sphere(double rad_, Cartesian3 p_, Cartesian3 e_, Cartesian3 c_, Refl_t refl_):
-//    rad(rad_), p(p_), e(e_), c(c_), refl(refl_) {}
-
-//  double intersect(Ray &r) const { // returns distance, 0 if nohit
-//    Cartesian3 op = p-r.origin() ; // Solve t^2*d.d + 2*t*(o-p).d + (o-p).(o-p)-R^2 = 0
-//    double t, eps=1e-4, b=op.dot(r.direction()), det=b*b-op.dot(op)+rad*rad;
-//    if (det<0) return 0; else det=sqrt(det);
-//    return (t=b-det)>eps ? t : ((t=b+det)>eps ? t : 0);
-//  }
-//};
-
-
-Sphere spheres[] = {//Scene: radius, position, emission, color, material
-//   Sphere(1e5, Cartesian3( 1e5+1,40.8,81.6), Cartesian3(),Cartesian3(.75,.25,.25),DIFF),//Left
-//   Sphere(1e5, Cartesian3(-1e5+99,40.8,81.6),Cartesian3(),Cartesian3(.25,.25,.75),DIFF),//Rght
-//   Sphere(1e5, Cartesian3(50,40.8, 1e5),     Cartesian3(),Cartesian3(.75,.75,.75),DIFF),//Back
-//   Sphere(1e5, Cartesian3(50,40.8,-1e5+170), Cartesian3(),Cartesian3(),           DIFF),//Frnt
-//   Sphere(1e5, Cartesian3(50, 1e5, 81.6),    Cartesian3(),Cartesian3(.75,.75,.75),DIFF),//Botm
-//   Sphere(1e5, Cartesian3(50,-1e5+81.6,81.6),Cartesian3(),Cartesian3(.75,.75,.75),DIFF),//Top
-   Sphere(16.5,Cartesian3(27,16.5,47),       Cartesian3(32,33,43),Cartesian3(255,0,0)*.999, SPEC),//Mirr
-//   Sphere(16.5,Cartesian3(73,16.5,78),       Cartesian3(),Cartesian3(1,1,1)*.999, REFR),//Glas
-   Sphere(600, Cartesian3(50,681.6-.27,81.6),Cartesian3(12,12,12),  Cartesian3(23,34,32), DIFF) //Lite
- };
 
 
 
-//bool intersect(Ray &r, double &t, int &id){
-//   double n=sizeof(spheres)/sizeof(Sphere), d, inf=t=1e20;
-//   for(int i=int(n);i--;) if((d=spheres[i].intersect(r))&&d<t){t=d;id=i;}
-//   return t<inf;
-// }
 
 //Cartesian3 radiance(Ray &r, int depth, int Xi){
 //   double t;                               // distance to intersection
@@ -206,9 +216,9 @@ int RayTrace::run(){
 
     int n=sizeof(spheres)/sizeof(Sphere);
 
-    for(int i=0;i<n;i++){
-        world.add(&spheres[i]);
-    }
+//    for(int i=0;i<n;i++){
+//        world.add(&spheres[i]);
+//    }
 
 
 //    std::Cartesian3tor<std::Cartesian3tor<screenVertexWithAttributes>> meshLish = this->fakegl->meshListInworldCS;
@@ -218,7 +228,7 @@ int RayTrace::run(){
 
 //    }
     std::cout<<"render"<<std::endl;
-    int samps = 8;
+    int samps = 40;
     int w = image_width, h = image_height;
 //    int w=1024, h=768; // # samples
     Ray cam(Cartesian3(50,52,295.6), Cartesian3(0,-0.042612,-1).unit()); // cam pos, dir
