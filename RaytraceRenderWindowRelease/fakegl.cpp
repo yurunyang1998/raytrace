@@ -16,7 +16,7 @@
 
 #include "fakegl.h"
 #include <math.h>
-
+#include "raytracetools.h"
 //-------------------------------------------------//
 //                                                 //
 // CONSTRUCTOR / DESTRUCTOR                        //
@@ -371,11 +371,6 @@ void FakeGL::Vertex3f(float x, float y, float z)
         vertex.v = this->textureV;
         vertex.normal = this->normal;
 
-//        std::copy(std::begin(this->ambientMaterial), std::end(this->ambientMaterial), std::begin(vertex.ambientMaterial));
-//        std::copy(std::begin(this->emissionMaterial), std::end(this->emissionMaterial), std::begin(vertex.emissionMaterial));
-//        std::copy(std::begin(this->specularMaterial), std::end(this->specularMaterial), std::begin(vertex.specularMaterial));
-//        std::copy(std::begin(this->diffuseMaterial), std::end(this->diffuseMaterial), std::begin(vertex.diffuseMaterial));
-//        vertex.shinessMaterial = this->shinessMaterial;
 
 
 
@@ -992,8 +987,10 @@ void FakeGL::ProcessFragment()
 
 
 void FakeGL::raytrace(){
+    Clear(0);
 
-
+    RayTrace rt(this);
+    rt.run();
 
 
 

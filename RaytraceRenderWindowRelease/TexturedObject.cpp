@@ -38,6 +38,7 @@
 
 #define MAXIMUM_LINE_LENGTH 1024
 
+static bool rendered=false;
 // constructor will initialise to safe values
 TexturedObject::TexturedObject()
     : centreOfGravity(0.0,0.0,0.0)
@@ -550,7 +551,13 @@ void TexturedObject::FakeGLRender(RenderParameters *renderParameters, FakeGL *fa
         } // per face
 
     // close off the triangles
-    fakeGL->End();
+    if(rendered == false){
+        fakeGL->raytrace();
+        rendered = true;
+    }
+
+//    fakeGL->meshListInworldCS.clear();
+//    fakeGL->End();
 
     // if we have texturing enabled, turn texturing back off
     if (renderParameters->texturedRendering)

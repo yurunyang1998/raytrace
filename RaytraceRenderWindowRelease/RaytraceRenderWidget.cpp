@@ -55,10 +55,12 @@ RaytraceRenderWidget::~RaytraceRenderWidget()
 void RaytraceRenderWidget::initializeGL()
     { // RaytraceRenderWidget::initializeGL()
 	// this should remain empty
+    std::cout<<"initial GL"<<std::endl;
+
     fakeGL.Enable(FAKEGL_LIGHTING);
 
     // background is yellowish-grey
-    fakeGL.ClearColor(0.8, 0.8, 0.6, 1.0);
+//    fakeGL.ClearColor(0.8, 0.8, 0.6, 1.0);
 
     // now transfer assets (ie texture) to the library
     texturedObject->TransferAssetsToFakeGL(&fakeGL);
@@ -100,6 +102,7 @@ void RaytraceRenderWidget::paintGL()
     glClear(GL_COLOR_BUFFER_BIT);
 
     // and display the image
+//    this->fakeGL.raytrace();
 
     paintFakeGL();
 
@@ -113,7 +116,7 @@ void RaytraceRenderWidget::paintFakeGL(){
         fakeGL.Disable(FAKEGL_DEPTH_TEST);
 
     // clear the buffer
-    fakeGL.Clear(FAKEGL_COLOR_BUFFER_BIT | (renderParameters->depthTestOn ? FAKEGL_DEPTH_BUFFER_BIT: 0));
+//    fakeGL.Clear(FAKEGL_COLOR_BUFFER_BIT | (renderParameters->depthTestOn ? FAKEGL_DEPTH_BUFFER_BIT: 0));
 
     // set model view matrix based on stored translation, rotation &c.
     fakeGL.MatrixMode(FAKEGL_MODELVIEW);
@@ -218,7 +221,6 @@ void RaytraceRenderWidget::Raytrace()
 
 
 
-
 	// This is where you will invoke your raytracing
     } // RaytraceRenderWidget::Raytrace()
     
@@ -243,7 +245,7 @@ void RaytraceRenderWidget::mousePressEvent(QMouseEvent *event)
         whichButton = Qt::RightButton;
     
     // send signal to the controller for detailed processing
-    emit BeginScaledDrag(whichButton, x,y);
+//    emit BeginScaledDrag(whichButton, x,y);
     } // RaytraceRenderWidget::mousePressEvent()
     
 void RaytraceRenderWidget::mouseMoveEvent(QMouseEvent *event)
@@ -256,7 +258,7 @@ void RaytraceRenderWidget::mouseMoveEvent(QMouseEvent *event)
     float y = (size - 2.0 * event->y() ) / size;
     
     // send signal to the controller for detailed processing
-    emit ContinueScaledDrag(x,y);
+//    emit ContinueScaledDrag(x,y);
     } // RaytraceRenderWidget::mouseMoveEvent()
     
 void RaytraceRenderWidget::mouseReleaseEvent(QMouseEvent *event)
@@ -269,5 +271,5 @@ void RaytraceRenderWidget::mouseReleaseEvent(QMouseEvent *event)
     float y = (size - 2.0 * event->y() ) / size;
     
     // send signal to the controller for detailed processing
-    emit EndScaledDrag(x,y);
+//    emit EndScaledDrag(x,y);
     } // RaytraceRenderWidget::mouseReleaseEvent()

@@ -233,7 +233,7 @@ void RenderWidget::mousePressEvent(QMouseEvent *event)
         whichButton = Qt::RightButton;
     
     // send signal to the controller for detailed processing
-    emit BeginScaledDrag(whichButton, x,y);
+//    emit BeginScaledDrag(whichButton, x,y);
     } // RenderWidget::mousePressEvent()
     
 void RenderWidget::mouseMoveEvent(QMouseEvent *event)
@@ -246,7 +246,7 @@ void RenderWidget::mouseMoveEvent(QMouseEvent *event)
     float y = (size - 2.0 * event->y() ) / size;
     
     // send signal to the controller for detailed processing
-    emit ContinueScaledDrag(x,y);
+//    emit ContinueScaledDrag(x,y);
     } // RenderWidget::mouseMoveEvent()
     
 void RenderWidget::mouseReleaseEvent(QMouseEvent *event)
@@ -259,5 +259,5 @@ void RenderWidget::mouseReleaseEvent(QMouseEvent *event)
     float y = (size - 2.0 * event->y() ) / size;
     
     // send signal to the controller for detailed processing
-    emit EndScaledDrag(x,y);
+//    emit EndScaledDrag(x,y);
     } // RenderWidget::mouseReleaseEvent()

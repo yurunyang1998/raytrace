@@ -48,6 +48,14 @@ Cartesian3 Cartesian3::operator -(const Cartesian3 &other) const
     return returnVal;
     } // Cartesian3::operator -()
 
+Cartesian3 Cartesian3::operator %(const Cartesian3 &b) const
+    { // Cartesian3::operator -()
+        Cartesian3  returnVal(y*b.z-z*b.y,z*b.x-x*b.z,x*b.y-y*b.x);
+        return returnVal;
+    } // Cartesian3::operator -()
+
+
+
 // multiplication operator
 Cartesian3 Cartesian3::operator *(float factor) const
     { // Cartesian3::operator *()
@@ -75,6 +83,14 @@ Cartesian3 Cartesian3::cross(const Cartesian3 &other) const
     Cartesian3 returnVal(y * other.z - z * other.y, z * other.x - x * other.z, x * other.y - y * other.x);
     return returnVal;
     } // Cartesian3::cross()
+
+Cartesian3 Cartesian3::mult(const Cartesian3 &other) const
+    { // Cartesian3::cross()
+    Cartesian3 returnVal(x*other.x, y*other.y, z*other.z);
+    return returnVal;
+    } // Cartesian3::cross()
+
+
 
 // routine to find the length
 float Cartesian3::length() const
