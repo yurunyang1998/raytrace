@@ -61,6 +61,7 @@ public:
     Sphere(double radius_, Cartesian3 position_, Cartesian3 emission_, Cartesian3 color_, Refl_t rf_):
         radius(radius_),position(position_),emission(emission_),color(color_){
         objType = 1;
+        emitte = emission;
         reflectType = rf_;
     }
 

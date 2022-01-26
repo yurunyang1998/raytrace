@@ -61,9 +61,9 @@ Cartesian3 RayTrace::radiance(Ray &r, int depth, hitList &world, int Xi){
         return Cartesian3();
     }
     auto hittedObj = rec.objptr;
-    if(++depth>1){
+    if(++depth>5){
         //TODO::russian roulette
-        return hittedObj->emitte;
+        return Cartesian3();
     }
     Cartesian3 n,nl, color; //n means normal, nl means to inside or outside
     Cartesian3 hitPoint = rec.hitPoint;
@@ -133,14 +133,14 @@ Cartesian3 RayTrace::radiance(Ray &r, int depth, hitList &world, int Xi){
 
 
 Sphere spheres[] = {//Scene: radius, position, emission, color, material
-   Sphere(1e5, Cartesian3( 1e5+1,40.8,81.6), Cartesian3(),Cartesian3(.75,.25,.25),DIFF),//Left
-   Sphere(1e5, Cartesian3(-1e5+99,40.8,81.6),Cartesian3(),Cartesian3(.25,.25,.75),DIFF),//Rght
-   Sphere(1e5, Cartesian3(50,40.8, 1e5),     Cartesian3(),Cartesian3(.75,.75,.75),DIFF),//Back
-   Sphere(1e5, Cartesian3(50,40.8,-1e5+170), Cartesian3(),Cartesian3(),           DIFF),//Frnt
-   Sphere(1e5, Cartesian3(50, 1e5, 81.6),    Cartesian3(),Cartesian3(.75,.75,.75),DIFF),//Botm
-   Sphere(1e5, Cartesian3(50,-1e5+81.6,81.6),Cartesian3(),Cartesian3(.75,.75,.75),DIFF),//Top
-   Sphere(16.5,Cartesian3(27,16.5,47),       Cartesian3(),Cartesian3(1,1,1)*.999, SPEC),//Mirr
-   Sphere(16.5,Cartesian3(73,16.5,78),       Cartesian3(),Cartesian3(1,1,1)*.999, REFR),//Glas
+//   Sphere(1e5, Cartesian3( 1e5+1,40.8,81.6), Cartesian3(),Cartesian3(.75,.25,.25),DIFF),//Left
+//   Sphere(1e5, Cartesian3(-1e5+99,40.8,81.6),Cartesian3(),Cartesian3(.25,.25,.75),DIFF),//Rght
+//   Sphere(1e5, Cartesian3(50,40.8, 1e5),     Cartesian3(),Cartesian3(.75,.75,.75),DIFF),//Back
+//   Sphere(1e5, Cartesian3(50,40.8,-1e5+170), Cartesian3(),Cartesian3(),           DIFF),//Frnt
+//   Sphere(1e5, Cartesian3(50, 1e5, 81.6),    Cartesian3(),Cartesian3(.75,.75,.75),DIFF),//Botm
+//   Sphere(1e5, Cartesian3(50,-1e5+81.6,81.6),Cartesian3(),Cartesian3(.75,.75,.75),DIFF),//Top
+   Sphere(16.5,Cartesian3(27,16.5,47),       Cartesian3(32,33,43),Cartesian3(255,0,0)*.999, SPEC),//Mirr
+//   Sphere(16.5,Cartesian3(73,16.5,78),       Cartesian3(),Cartesian3(1,1,1)*.999, REFR),//Glas
    Sphere(600, Cartesian3(50,681.6-.27,81.6),Cartesian3(12,12,12),  Cartesian3(23,34,32), DIFF) //Lite
  };
 
@@ -204,8 +204,9 @@ int RayTrace::run(){
 
     hitList world;
 
+    int n=sizeof(spheres)/sizeof(Sphere);
 
-    for(int i=0;i<9;i++){
+    for(int i=0;i<n;i++){
         world.add(&spheres[i]);
     }
 
@@ -238,7 +239,7 @@ int RayTrace::run(){
 //                  std::cout<<x<<" "<<y<<"  "<<sy<<" "<<sx<<" "<<s<<std::endl;
                 } // Camera rays are pushed ^^^^^ forward to start in interior
                 c[i] = c[i] + Cartesian3(clamp(r.x),clamp(r.y),clamp(r.z))*.25;
-                fakegl->frameBuffer[y][x] = RGBAValue(c[i].x*255, c[i].y*255, c[i].z*255);
+                fakegl->frameBuffer[y][x] = RGBAValue(toInt(c[i].x), toInt(c[i].y), toInt(c[i].z));
 //                fakegl->frameBuffer[y][x] = RGBAValue(1, 34, 1);
 
               }
