@@ -403,7 +403,7 @@ class FakeGL
     // process a single fragment
     void ProcessFragment();
 
-    void raytrace();
+    void raytrace(int command);
 
     }; // class FakeGL
 

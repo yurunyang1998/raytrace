@@ -531,10 +531,43 @@ void FakeGL::ClearColor(float red, float green, float blue, float alpha)
 // transform one vertex & shift to the raster queue
 void FakeGL::TransformVertex()
     { // TransformVertex()
+//    auto vertex = this->vertexQueue.front();
+//            vertexQueue.pop_front();
+
+//            // implement matrix
+//            Homogeneous4 hg4(vertex.position.x, vertex.position.y, vertex.position.z);
+//            auto wdcs =  this->modelViewMat* hg4;
+//            Homogeneous4 screenResult = this->projectionMat* wdcs;
+//            Cartesian3 ndcs = screenResult.Point();
+//            Homogeneous4 ndcsHg4 = Homogeneous4(ndcs.x, ndcs.y, ndcs.z);
+//            screenResult = this->viewPortMat * ndcsHg4;
+
+//            Homogeneous4 hg4Normal = this->modelViewMat * vertex.normal;
+
+
+
+//            screenVertexWithAttributes  screenVertex(screenResult.x, screenResult.y, screenResult.z);
+//            screenVertex.colour = this->colorf;
+//            screenVertex.normal = hg4Normal;
+
+//            if(this->enable_texture_2D){
+//                screenVertex.u = this->textureU;
+//                screenVertex.v = this->textureV;
+//            }
+
+
+//            this->rasterQueue.push_back(screenVertex);
+
+//            RasterisePrimitive();
+
+
+
+
+
         auto vertex = this->vertexQueue.front();
         vertexQueue.pop_front();
 
-        // implement matrix
+//        // implement matrix
         Homogeneous4 hg4(vertex.position.x, vertex.position.y, vertex.position.z);
         auto temp =  this->modelViewMat* hg4;
         screenVertexWithAttributes  vertexInWorldCS(temp.x, temp.y, temp.z);
@@ -986,11 +1019,11 @@ void FakeGL::ProcessFragment()
 
 
 
-void FakeGL::raytrace(){
+void FakeGL::raytrace(int command){
     Clear(0);
 
     RayTrace rt(this);
-    rt.run();
+    rt.run(command);
 
 
 

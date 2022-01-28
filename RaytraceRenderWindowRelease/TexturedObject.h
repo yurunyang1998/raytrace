@@ -45,6 +45,9 @@
 #include "RGBAImage.h" 
 #include "fakegl.h"
 
+extern int command;
+
+
 class TexturedObject
     { // class TexturedObject
     public:

@@ -28,6 +28,7 @@
 #include "RenderParameters.h"
 #include "RenderController.h"
 
+extern int command  =1;
 // main routine
 int main(int argc, char **argv)
     { // main()
@@ -35,7 +36,7 @@ int main(int argc, char **argv)
     QApplication renderApp(argc, argv);
 
     // check the args to make sure there's an input file
-    if (argc != 3) 
+    if (argc != 4)
         { // bad arg count
         // print an error message
         std::cout << "Usage: " << argv[0] << " geometry texture" << std::endl; 
@@ -49,7 +50,7 @@ int main(int argc, char **argv)
     // open the input files for the geometry & texture
     std::ifstream geometryFile(argv[1]);
     std::ifstream textureFile(argv[2]);
-
+    command = atoi(argv[3]);
     // try reading it
     if (!(geometryFile.good()) || !(textureFile.good()) || (!texturedObject.ReadObjectStream(geometryFile, textureFile)))
         { // object read failed 

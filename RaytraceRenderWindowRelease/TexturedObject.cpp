@@ -32,11 +32,11 @@
 #include <iomanip>
 #include <sstream>
 #include <string>
-
 // include the Cartesian 3- vector class
 #include "Cartesian3.h"
 
 #define MAXIMUM_LINE_LENGTH 1024
+
 
 static bool rendered=false;
 // constructor will initialise to safe values
@@ -552,11 +552,11 @@ void TexturedObject::FakeGLRender(RenderParameters *renderParameters, FakeGL *fa
 
     // close off the triangles
     if(rendered == false){
-        fakeGL->raytrace();
+        fakeGL->raytrace(command);
         rendered = true;
     }
 
-//    fakeGL->meshListInworldCS.clear();
+    fakeGL->meshListInworldCS.clear();
 //    fakeGL->End();
 
     // if we have texturing enabled, turn texturing back off
