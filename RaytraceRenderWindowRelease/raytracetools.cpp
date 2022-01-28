@@ -277,7 +277,7 @@ int RayTrace::run(int command){
 //    }
 
     std::cout<<"render"<<std::endl;
-    int samps = 400;
+    int samps = 300;
     int w = this->fakegl->frameBuffer.width, h = this->fakegl->frameBuffer.height;
 //    int w=1024, h=768; // # samples
     Ray cam(Cartesian3(50,52,295.6), Cartesian3(0,-0.042612,-1).unit()); // cam pos, dir

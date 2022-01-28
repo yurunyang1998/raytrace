@@ -5,7 +5,6 @@
 #include <memory>
 #include <climits>
 #include "RGBAValue.h"
-#include "hit_record.h"
 #include <vector>
 #include <omp.h>
 #include <math.h>
