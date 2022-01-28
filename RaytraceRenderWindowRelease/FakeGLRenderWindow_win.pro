@@ -41,7 +41,7 @@ HEADERS += ArcBall.h \
            RGBAImage.h \
            RGBAValue.h \
            TexturedObject.h \
-           RaytraceRenderWidget.h \ \
+           RaytraceRenderWidget.h \
     fakegl.h    \
     raytracetools.h
 
