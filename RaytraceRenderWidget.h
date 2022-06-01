@@ -29,6 +29,11 @@
 // and include all of our own headers that we need
 #include "TexturedObject.h"
 #include "RenderParameters.h"
+#include "raytrace/hitList.h"
+#include "raytrace/hitable.h"
+#include "raytrace/triangle.h"
+#include "raytrace/camera.h"
+#include "Matrix4.h"
 
 
 // class for a render widget with arcball linked to an external arcball widget
@@ -38,7 +43,7 @@ class RaytraceRenderWidget : public QOpenGLWidget
 	private:	
 	// the geometric object to be rendered
     std::vector<TexturedObject> *texturedObjects;
-
+    std::vector<Triangle * > triangleObjs;
 	// the render parameters to use
 	RenderParameters *renderParameters;
 
@@ -69,6 +74,12 @@ class RaytraceRenderWidget : public QOpenGLWidget
 	void paintGL();
 	
     Cartesian3 MonteCarloHemisphereVector(Cartesian3 normal);
+
+    bool convertVectice2Triangle(std::vector<TexturedObject> * textObjs);
+    void readSceneObj(HitList &scene_);
+    RGBAValue getHitColor(Ray &ray, HitList &objList, int depth);
+    void write_color(Cartesian3 pixel_color, int samples_per_pixel, int i, int j);
+
 
 
 	// mouse-handling

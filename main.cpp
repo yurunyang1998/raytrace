@@ -53,11 +53,6 @@ int main(int argc, char **argv)
     std::ifstream geometryFile(argv[1]);
     std::ifstream textureFile(argv[2]);
 
-    if(!geometryFile.good()){
-        std::cout<<"geometry"<<std::endl;
-        return 0;
-    }
-
 
 
     // try reading it

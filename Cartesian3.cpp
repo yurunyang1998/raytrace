@@ -148,4 +148,20 @@ std::ostream & operator << (std::ostream &outStream, const Cartesian3 &value)
     outStream << std::setprecision(4) << value.x << " " << std::setprecision(4) << value.y << " " << std::setprecision(4) << value.z;
     return outStream;
     } // stream output
-        
+
+float Cartesian3::squared() const
+{
+    return x*x+y*y+z*z;
+}
+
+Cartesian3 Cartesian3::randomVector(float min,float max){
+
+    std::random_device rd;
+    std::uniform_real_distribution<float> range(min, max);
+    std::default_random_engine e{rd()};
+
+    return Cartesian3(range(e),range(e),range(e));
+
+
+}
+

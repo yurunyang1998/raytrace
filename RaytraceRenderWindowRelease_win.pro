@@ -43,7 +43,11 @@ HEADERS += ArcBall.h \
            TexturedObject.h \
            light.h \
            material.h \
-           raytrace/ray.h
+           raytrace/camera.h \
+           raytrace/hitList.h \
+           raytrace/hitable.h \
+           raytrace/ray.h \
+           raytrace/triangle.h
 SOURCES += ArcBall.cpp \
            ArcBallWidget.cpp \
            Cartesian3.cpp \
@@ -59,4 +63,6 @@ SOURCES += ArcBall.cpp \
            RGBAImage.cpp \
            RGBAValue.cpp \
            TexturedObject.cpp \
-           material.cpp
+           material.cpp \
+           raytrace/camera.cpp \
+           raytrace/triangle.cpp

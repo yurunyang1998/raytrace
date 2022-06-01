@@ -18,6 +18,8 @@
 #define CARTESIAN3_H
 
 #include <iostream>
+#include <random>
+
 
 // the class - we will rely on POD for sending to GPU
 class Cartesian3
@@ -61,6 +63,12 @@ class Cartesian3
     // operator that allows us to use array indexing instead of variable names
     float &operator [] (const int index);
     const float &operator [] (const int index) const;
+
+
+    float squared() const;
+    static Cartesian3 randomVector(float min,float max);
+
+
 
     }; // Cartesian3
 
