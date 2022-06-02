@@ -68,7 +68,6 @@ int main(int argc, char **argv)
     }else{
         texturedObjects = TexturedObject::ReadObjectStream(geometryFile, textureFile);
     }
-
     if(texturedObjects.size() == 0){
         std::cout << "Read failed for object " << argv[1] << " or texture " << argv[2] << std::endl;
         return 0;

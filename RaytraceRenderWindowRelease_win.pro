@@ -47,6 +47,7 @@ HEADERS += ArcBall.h \
            raytrace/hitList.h \
            raytrace/hitable.h \
            raytrace/ray.h \
+           raytrace/sphere.h \
            raytrace/triangle.h
 SOURCES += ArcBall.cpp \
            ArcBallWidget.cpp \

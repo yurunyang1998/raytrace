@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE QtCreatorProject>
-<!-- Written by QtCreator 4.12.2, 2022-06-01T14:56:17. -->
+<!-- Written by QtCreator 4.12.2, 2022-06-02T01:38:24. -->
 <qtcreator>
  <data>
   <variable>EnvironmentId</variable>
@@ -85,9 +85,9 @@
    <value type="QString" key="ProjectExplorer.ProjectConfiguration.DefaultDisplayName">Desktop (x86-windows-msvc2015-pe-64bit)</value>
    <value type="QString" key="ProjectExplorer.ProjectConfiguration.DisplayName">Desktop (x86-windows-msvc2015-pe-64bit)</value>
    <value type="QString" key="ProjectExplorer.ProjectConfiguration.Id">{0e0f9ea8-0936-4418-ae5f-5cf353ccc479}</value>
-   <value type="int" key="ProjectExplorer.Target.ActiveBuildConfiguration">1</value>
+   <value type="int" key="ProjectExplorer.Target.ActiveBuildConfiguration">0</value>
    <value type="int" key="ProjectExplorer.Target.ActiveDeployConfiguration">0</value>
-   <value type="int" key="ProjectExplorer.Target.ActiveRunConfiguration">0</value>
+   <value type="int" key="ProjectExplorer.Target.ActiveRunConfiguration">1</value>
    <valuemap type="QVariantMap" key="ProjectExplorer.Target.BuildConfiguration.0">
     <value type="bool">true</value>
     <value type="int" key="EnableQmlDebugging">0</value>
@@ -319,7 +319,7 @@
     <value type="QString" key="ProjectExplorer.ProjectConfiguration.DisplayName">RaytraceRenderWindowRelease_win2</value>
     <value type="QString" key="ProjectExplorer.ProjectConfiguration.Id">Qt4ProjectManager.Qt4RunConfiguration:H:/OneDrive/LEEDSSTUDY/Assignment_2_replace/Assignment_2_replace/RaytraceRenderWindowRelease/RaytraceRenderWindowRelease_win.pro</value>
     <value type="QString" key="ProjectExplorer.RunConfiguration.BuildKey">H:/OneDrive/LEEDSSTUDY/Assignment_2_replace/Assignment_2_replace/RaytraceRenderWindowRelease/RaytraceRenderWindowRelease_win.pro</value>
-    <value type="QString" key="RunConfiguration.Arguments">H:\OneDrive\LEEDSSTUDY\Assignment_2_replace\Assignment_2_replace\objects\sphere20x20.obj H:\OneDrive\LEEDSSTUDY\Assignment_2_replace\Assignment_2_replace\textures\earth.ppm</value>
+    <value type="QString" key="RunConfiguration.Arguments">H:\OneDrive\LEEDSSTUDY\Assignment_2_replace\Assignment_2_replace\objects\triangle_backplane.obj H:\OneDrive\LEEDSSTUDY\Assignment_2_replace\Assignment_2_replace\textures\earth.ppm</value>
     <value type="bool" key="RunConfiguration.Arguments.multi">true</value>
     <value type="QString" key="RunConfiguration.OverrideDebuggerStartup"></value>
     <value type="bool" key="RunConfiguration.UseCppDebugger">false</value>
@@ -329,7 +329,7 @@
     <value type="bool" key="RunConfiguration.UseQmlDebugger">false</value>
     <value type="bool" key="RunConfiguration.UseQmlDebuggerAuto">true</value>
     <value type="QString" key="RunConfiguration.WorkingDirectory"></value>
-    <value type="QString" key="RunConfiguration.WorkingDirectory.default">H:/OneDrive/LEEDSSTUDY/Assignment 2 replace/Assignment 2 replace/build-RaytraceRenderWindowRelease_win-Desktop_x86_windows_msvc2015_pe_64bit-Release</value>
+    <value type="QString" key="RunConfiguration.WorkingDirectory.default">H:/OneDrive/LEEDSSTUDY/Assignment 2 replace/Assignment 2 replace/build-RaytraceRenderWindowRelease_win-Desktop_x86_windows_msvc2015_pe_64bit-Debug</value>
    </valuemap>
    <valuemap type="QVariantMap" key="ProjectExplorer.Target.RunConfiguration.1">
     <value type="QString" key="Analyzer.Perf.CallgraphMode">dwarf</value>
@@ -404,7 +404,7 @@
     <value type="bool" key="RunConfiguration.UseQmlDebugger">false</value>
     <value type="bool" key="RunConfiguration.UseQmlDebuggerAuto">true</value>
     <value type="QString" key="RunConfiguration.WorkingDirectory"></value>
-    <value type="QString" key="RunConfiguration.WorkingDirectory.default">H:/OneDrive/LEEDSSTUDY/Assignment 2 replace/Assignment 2 replace/build-RaytraceRenderWindowRelease_win-Desktop_x86_windows_msvc2015_pe_64bit-Release</value>
+    <value type="QString" key="RunConfiguration.WorkingDirectory.default">H:/OneDrive/LEEDSSTUDY/Assignment 2 replace/Assignment 2 replace/build-RaytraceRenderWindowRelease_win-Desktop_x86_windows_msvc2015_pe_64bit-Debug</value>
    </valuemap>
    <value type="int" key="ProjectExplorer.Target.RunConfigurationCount">2</value>
   </valuemap>

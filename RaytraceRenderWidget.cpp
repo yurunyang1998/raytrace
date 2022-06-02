@@ -192,9 +192,10 @@ bool RaytraceRenderWidget::convertVectice2Triangle(std::vector<TexturedObject> *
     Matrix4 modelview;
     modelview.SetIdentity();
     modelview.SetScale(2,2,2);
-    modelview.SetTranslation(Cartesian3(0,0,-10.0));
+    modelview.SetTranslation(Cartesian3(0,0,-4.0));
 
     for(auto text=textObjs->begin();text!=textObjs->end();text++){
+        int faceIndex =0;
         for(auto &face: text->faceVertices){
 
 
@@ -213,12 +214,63 @@ bool RaytraceRenderWidget::convertVectice2Triangle(std::vector<TexturedObject> *
 //            Triangle *tri = new Triangle(vertices[face[0]], vertices[face[1]], vertices[face[2]]);
 
             Triangle *tri = new Triangle(v0,v1,v2);
+            tri->materialptr = text->material;
             tri->faceNormal = normals[face[0]];
+            tri->v0n = normals[face[0]];
+            tri->v1n = normals[face[1]];
+            tri->v2n = normals[face[2]];
+
+            tri->v0t = textureCoords[text->faceTexCoords[faceIndex][0]];
+            tri->v1t = textureCoords[text->faceTexCoords[faceIndex][1]];
+            tri->v2t = textureCoords[text->faceTexCoords[faceIndex][2]];
+
             this->triangleObjs.push_back(tri);
+            faceIndex++;
         }
     }
     return true;
 }
+
+Cartesian3 RaytraceRenderWidget::BaycentricInterpolation(HitPoint &hitpoint){
+
+    Triangle *tri = dynamic_cast<Triangle*>(hitpoint.objptr);
+    Cartesian3 &point = hitpoint.point;
+
+    Cartesian3 &vertex0 = tri->v0;
+    Cartesian3 &vertex1 = tri->v1;
+    Cartesian3 &vertex2 = tri->v2;
+
+    Cartesian3 vector01 = vertex1 - vertex0;
+    Cartesian3 vector12 = vertex2 - vertex1;
+    Cartesian3 vector20 = vertex0 - vertex2;
+
+    // now compute the line normal vectors
+    Cartesian3 normal01(-vector01.y, vector01.x, 0.0);
+    Cartesian3 normal12(-vector12.y, vector12.x, 0.0);
+    Cartesian3 normal20(-vector20.y, vector20.x, 0.0);
+
+    // we don't need to normalise them, because the square roots will cancel out in the barycentric coordinates
+    float lineConstant01 = normal01.dot(vertex0);
+    float lineConstant12 = normal12.dot(vertex1);
+    float lineConstant20 = normal20.dot(vertex2);
+
+    // and compute the distance of each vertex from the opposing side
+    float distance0 = normal12.dot(vertex0) - lineConstant12;
+    float distance1 = normal20.dot(vertex1) - lineConstant20;
+    float distance2 = normal01.dot(vertex2) - lineConstant01;
+
+    float alpha = (normal12.dot(point) - lineConstant12) / distance0;
+    float beta = (normal20.dot(point) - lineConstant20) / distance1;
+    float gamma = (normal01.dot(point) - lineConstant01) / distance2;
+
+
+    return Cartesian3(alpha, beta, gamma);
+
+
+
+
+}
+
 
 RGBAValue RaytraceRenderWidget::getHitColor(Ray &ray, HitList &objList, int depth)
 {
@@ -229,9 +281,49 @@ RGBAValue RaytraceRenderWidget::getHitColor(Ray &ray, HitList &objList, int dept
      if (objList.hit(ray, tempHp))
      {
 //           std::cout<<"hitted "<<tempHp.point<<std::endl;
-           Cartesian3 randomVec = Cartesian3::randomVector(0, 1);
-           Cartesian3 dir = tempHp.normal+randomVec ;
-           Ray reflectRay(tempHp.point, dir);
+            Cartesian3 randomVec = Cartesian3::randomVector(0, 1);
+            Cartesian3 dir = tempHp.normal+randomVec ;
+            Ray reflectRay(tempHp.point, dir);
+
+            Cartesian3 Baycentric = BaycentricInterpolation(tempHp);
+
+            float alpha=Baycentric.x, beta=Baycentric.y, gamma=Baycentric.z;
+            if ((alpha < 0.0) || (beta < 0.0) || (gamma < 0.0))
+                std::cout<<"invalid "<<alpha<<" "<<beta<<" "<<gamma<<std::endl;
+            Triangle * triptr = dynamic_cast<Triangle*>(tempHp.objptr);
+            Cartesian3 normalInterpolation(triptr->v0n.x*alpha + triptr->v1n.x*beta + triptr->v2n.x*gamma,
+                                           triptr->v0n.y*alpha + triptr->v1n.y*beta + triptr->v2n.y*gamma,
+                                           triptr->v0n.z*alpha + triptr->v1n.z*beta + triptr->v2n.z*gamma);
+
+            //THis Is The Mark 2, Barycentric Interpolation
+//            std::cout<<normalInterpolation<<std::endl;
+
+            if(this->renderParameters->texturedRendering){
+                auto v0t = triptr->v0t;
+                auto v1t = triptr->v1t;
+                auto v2t = triptr->v2t;
+
+                RGBAImage * textureDir = nullptr;
+                if(triptr->materialptr!=nullptr){
+                    textureDir = triptr->materialptr->texture;
+                }else{
+                    textureDir = this->texturedObjects->front().texture;
+                }
+
+
+                float textureWidth = textureDir->width;
+                float textureHeight = textureDir->height;
+
+                int intplU = (v0t.x*alpha + v1t.x*beta + v2t.x*gamma)*textureWidth;
+                int intplV = (v0t.y*alpha + v1t.y*beta + v2t.y*gamma)*textureHeight;
+
+
+                auto textColor = (*textureDir)[intplV][intplU];
+                return RGBAValue(1-textColor.red,1-textColor.green, 1-textColor.blue);
+
+            }
+
+
 
 //          double pdf = 1;
 //          RGBAValue color;
