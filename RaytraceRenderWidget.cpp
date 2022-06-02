@@ -116,6 +116,7 @@ void RaytraceRenderWidget::write_color(Cartesian3 pixel_color, int samples_per_p
 void RaytraceRenderWidget::RaytraceThread()
 {
     HitList scene;
+    frameBuffer.clear(RGBAValue(0.0f, 0.0f, 0.0f,1.0f));
 
     if(!convertVectice2Triangle(this->texturedObjects))
         return;
@@ -191,9 +192,17 @@ bool RaytraceRenderWidget::convertVectice2Triangle(std::vector<TexturedObject> *
 
     Matrix4 modelview;
     modelview.SetIdentity();
-    modelview.SetScale(2,2,2);
-    modelview.SetTranslation(Cartesian3(0,0,-4.0));
+    if(this->renderParameters->centreObject){
+//        modelview = modelview;
+        modelview.SetTranslation(Cartesian3(this->renderParameters->xTranslate,
+                                            this->renderParameters->yTranslate,
+                                            this->renderParameters->zoomScale-5));
+    }
+    modelview = modelview * this->renderParameters->rotationMatrix;
 
+//    modelview.SetTranslation(Cartesian3(0, 0, this->renderParameters->zoomScale));
+
+    this->triangleObjs.clear();
     for(auto text=textObjs->begin();text!=textObjs->end();text++){
         int faceIndex =0;
         for(auto &face: text->faceVertices){
