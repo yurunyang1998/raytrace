@@ -280,19 +280,27 @@ Cartesian3 RaytraceRenderWidget::BaycentricInterpolation(HitPoint &hitpoint){
 
 }
 
+Ray RaytraceRenderWidget::reflectRay(Ray &inRay, HitPoint &hitPoint){
+
+    Triangle * triptr = dynamic_cast<Triangle *>(hitPoint.objptr);
+    Cartesian3 &normal = triptr->faceNormal;
+    auto reflectDir = 2*normal.dot(-1*inRay.direction())*normal + inRay.direction();
+    return Ray(hitPoint.point, reflectDir);
+
+}
+
 
 RGBAValue RaytraceRenderWidget::getHitColor(Ray &ray, HitList &objList, int depth)
 {
-     if (depth > 5)
-          return RGBAValue(0, 0, 0);
+
 
      HitPoint tempHp;
      if (objList.hit(ray, tempHp))
      {
 //           std::cout<<"hitted "<<tempHp.point<<std::endl;
-            Cartesian3 randomVec = Cartesian3::randomVector(0, 1);
-            Cartesian3 dir = tempHp.normal+randomVec ;
-            Ray reflectRay(tempHp.point, dir);
+//            Cartesian3 randomVec = Cartesian3::randomVector(0, 1);
+//            Cartesian3 dir = tempHp.normal+randomVec ;
+            Ray reflRay = reflectRay(ray, tempHp);
 
             Cartesian3 Baycentric = BaycentricInterpolation(tempHp);
 
@@ -328,7 +336,9 @@ RGBAValue RaytraceRenderWidget::getHitColor(Ray &ray, HitList &objList, int dept
 
 
                 auto textColor = (*textureDir)[intplV][intplU];
-                return RGBAValue(1-textColor.red,1-textColor.green, 1-textColor.blue);
+                return RGBAValue(textColor.red,textColor.green, textColor.blue).modulate(getHitColor(reflRay, objList, depth + 1));
+
+//                return RGBAValue(1-textColor.red,1-textColor.green, 1-textColor.blue);
 
             }
 
@@ -341,8 +351,10 @@ RGBAValue RaytraceRenderWidget::getHitColor(Ray &ray, HitList &objList, int dept
 
 //          return emmited + color * tempHp.matptr->scatterPdf(scatterRay, tempHp, pdf) * getHitColor(scatterRay, objList, depth + 1) * (1 / pdf);
 
-           return 0.5 * getHitColor(reflectRay, objList, depth + 1);
+           return  getHitColor(reflRay, objList, depth + 1);
      }
+     if (depth > 5)
+          return RGBAValue(0, 0, 0);
 
      Cartesian3 unit_direction = ray.direction().unit();
      auto t = 0.5 * (unit_direction.y + 1.0);
