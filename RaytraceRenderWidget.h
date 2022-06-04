@@ -81,6 +81,7 @@ class RaytraceRenderWidget : public QOpenGLWidget
     void write_color(Cartesian3 pixel_color, int samples_per_pixel, int i, int j);
     Cartesian3 BaycentricInterpolation(HitPoint &hitpoint);
     Ray reflectRay(Ray &inRay, HitPoint &hitPoint);
+    Ray refractionRay(Ray &inRay, HitPoint &hitPoint);
 
 
 	// mouse-handling

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE QtCreatorProject>
-<!-- Written by QtCreator 4.12.2, 2022-06-04T02:13:48. -->
+<!-- Written by QtCreator 4.12.2, 2022-06-05T01:36:58. -->
 <qtcreator>
  <data>
   <variable>EnvironmentId</variable>
@@ -394,7 +394,7 @@
     <value type="QString" key="ProjectExplorer.ProjectConfiguration.DisplayName">material</value>
     <value type="QString" key="ProjectExplorer.ProjectConfiguration.Id">Qt4ProjectManager.Qt4RunConfiguration:H:/OneDrive/LEEDSSTUDY/Assignment_2_replace/Assignment_2_replace/RaytraceRenderWindowRelease/RaytraceRenderWindowRelease_win.pro</value>
     <value type="QString" key="ProjectExplorer.RunConfiguration.BuildKey">H:/OneDrive/LEEDSSTUDY/Assignment_2_replace/Assignment_2_replace/RaytraceRenderWindowRelease/RaytraceRenderWindowRelease_win.pro</value>
-    <value type="QString" key="RunConfiguration.Arguments">H:\OneDrive\LEEDSSTUDY\Assignment_2_replace\Assignment_2_replace\objects\triangle_backplane.obj H:\OneDrive\LEEDSSTUDY\Assignment_2_replace\Assignment_2_replace\materials\triangle_backplane.mtl</value>
+    <value type="QString" key="RunConfiguration.Arguments">H:\OneDrive\LEEDSSTUDY\Assignment_2_replace\Assignment_2_replace\objects\cornell.obj H:\OneDrive\LEEDSSTUDY\Assignment_2_replace\Assignment_2_replace\materials\cornell.mtl</value>
     <value type="bool" key="RunConfiguration.Arguments.multi">true</value>
     <value type="QString" key="RunConfiguration.OverrideDebuggerStartup"></value>
     <value type="bool" key="RunConfiguration.UseCppDebugger">false</value>

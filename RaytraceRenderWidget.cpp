@@ -289,24 +289,50 @@ Ray RaytraceRenderWidget::reflectRay(Ray &inRay, HitPoint &hitPoint){
 
 }
 
+Ray RaytraceRenderWidget::refractionRay(Ray &inRay, HitPoint &hitPoint){
+
+    Triangle * triptr = dynamic_cast<Triangle *>(hitPoint.objptr);
+    Cartesian3 &normal = triptr->faceNormal;
+    auto ior =  triptr->materialptr->indexOfRefraction;
+
+    auto cosTheta = std::fmin(normal.dot(inRay.direction() * -1), 1.0);
+    auto perp =  ior * (inRay.direction() + cosTheta * normal);
+    auto parallel = -sqrt(fabs(1.0 - perp.squared())) * normal;
+    Cartesian3 refractionDir = perp + parallel;
+    return Ray(hitPoint.point, refractionDir);
+
+
+
+}
+
+
 
 RGBAValue RaytraceRenderWidget::getHitColor(Ray &ray, HitList &objList, int depth)
 {
-
+    if (depth > 5)
+         return 0.5*RGBAValue(255, 255, 255);
 
      HitPoint tempHp;
+
+
+
      if (objList.hit(ray, tempHp))
      {
 //           std::cout<<"hitted "<<tempHp.point<<std::endl;
 //            Cartesian3 randomVec = Cartesian3::randomVector(0, 1);
 //            Cartesian3 dir = tempHp.normal+randomVec ;
             Ray reflRay = reflectRay(ray, tempHp);
+            Ray refractRay = refractionRay(ray, tempHp);
 
             Cartesian3 Baycentric = BaycentricInterpolation(tempHp);
 
             float alpha=Baycentric.x, beta=Baycentric.y, gamma=Baycentric.z;
-            if ((alpha < 0.0) || (beta < 0.0) || (gamma < 0.0))
+            if ((alpha < 0.0) || (beta < 0.0) || (gamma < 0.0) || isnan(alpha) || isnan(beta) || isnan(gamma)){
+
                 std::cout<<"invalid "<<alpha<<" "<<beta<<" "<<gamma<<std::endl;
+//                return RGBAValue(0, 0, 0);
+            }
+
             Triangle * triptr = dynamic_cast<Triangle*>(tempHp.objptr);
             Cartesian3 normalInterpolation(triptr->v0n.x*alpha + triptr->v1n.x*beta + triptr->v2n.x*gamma,
                                            triptr->v0n.y*alpha + triptr->v1n.y*beta + triptr->v2n.y*gamma,
@@ -334,12 +360,22 @@ RGBAValue RaytraceRenderWidget::getHitColor(Ray &ray, HitList &objList, int dept
                 int intplU = (v0t.x*alpha + v1t.x*beta + v2t.x*gamma)*textureWidth;
                 int intplV = (v0t.y*alpha + v1t.y*beta + v2t.y*gamma)*textureHeight;
 
-
                 auto textColor = (*textureDir)[intplV][intplU];
-                return RGBAValue(textColor.red,textColor.green, textColor.blue).modulate(getHitColor(reflRay, objList, depth + 1));
+                RGBAValue color = RGBAValue(textColor.red,textColor.green, textColor.blue);
+//                RGBAValue color(1-textColor.red,1-textColor.green, 1-textColor.blue);
+                if(this->renderParameters->reflectionEnabled==false &&
+                   this->renderParameters->refractionEnabled==false)
+                    return color;
 
-//                return RGBAValue(1-textColor.red,1-textColor.green, 1-textColor.blue);
+                RGBAValue mixLight;
+                if(this->renderParameters->refractionEnabled)
+                    mixLight = getHitColor(refractRay, objList, depth+1);
 
+                if(this->renderParameters->reflectionEnabled)
+                    mixLight = mixLight + getHitColor(reflRay, objList, depth + 1);
+
+
+                return color.modulate(mixLight);
             }
 
 
@@ -350,17 +386,16 @@ RGBAValue RaytraceRenderWidget::getHitColor(Ray &ray, HitList &objList, int dept
 //          auto scatterRay = tempHp.matptr->scatter(ray, tempHp, color, pdf);
 
 //          return emmited + color * tempHp.matptr->scatterPdf(scatterRay, tempHp, pdf) * getHitColor(scatterRay, objList, depth + 1) * (1 / pdf);
-
-           return  getHitColor(reflRay, objList, depth + 1);
+            auto finalColor = 0.5*getHitColor(refractRay, objList, depth + 1)+0.4*getHitColor(reflRay, objList, depth + 1);
+            return  finalColor;
      }
-     if (depth > 5)
-          return RGBAValue(0, 0, 0);
+
 
      Cartesian3 unit_direction = ray.direction().unit();
      auto t = 0.5 * (unit_direction.y + 1.0);
      // cout<<t<<endl;
      auto color = (1.0 - t) * RGBAValue(255, 255, 255) + t * RGBAValue(0.12 * 255, 0.24 * 255, 0.2 * 255);
-     // cerr<<color<<endl;
+//     std::cerr<<color<<endl;
      return color;
 }
 
