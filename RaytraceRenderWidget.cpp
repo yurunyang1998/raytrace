@@ -306,11 +306,47 @@ Ray RaytraceRenderWidget::refractionRay(Ray &inRay, HitPoint &hitPoint){
 }
 
 
+auto reflectance(double cosine, double ref) -> double
+{
+    // Use Schlick's approximation for reflectance.
+    auto r0 = (1-ref) / (1+ref);
+    r0 = r0*r0;
+    return r0 + (1-r0)*std::pow((1 - cosine),5);
+}
+
+
+auto reflect(const Cartesian3 & vec,const Cartesian3 & normal) -> Cartesian3
+{
+    float dn = 2 * vec.dot(normal);
+    return vec - normal * dn;
+}
+
+//n⋅sin(a) = n′⋅sin(a)′
+auto refract(const Cartesian3 & vec,const Cartesian3 & normal, double angle) -> Cartesian3
+{
+    auto cosTheta = std::fmin(normal.dot(vec * -1), 1.0);
+    auto perp =  angle * (vec + cosTheta * normal);
+    auto parallel = -sqrt(fabs(1.0 - perp.squared())) * normal;
+    return perp + parallel;
+}
+
+
+template <class T>
+inline auto nextReal(T from, T to)  -> T
+{
+    if (from >= to)
+        return from;
+    std::uniform_real_distribution<T> range(from, to);
+    std::random_device rd;
+    std::default_random_engine engine{ rd() };
+    return range(engine);
+}
+
 
 RGBAValue RaytraceRenderWidget::getHitColor(Ray &ray, HitList &objList, int depth)
 {
     if (depth > 5)
-         return 0.5*RGBAValue(255, 255, 255);
+         return RGBAValue(1, 1, 1);
 
      HitPoint tempHp;
 
@@ -321,8 +357,8 @@ RGBAValue RaytraceRenderWidget::getHitColor(Ray &ray, HitList &objList, int dept
 //           std::cout<<"hitted "<<tempHp.point<<std::endl;
 //            Cartesian3 randomVec = Cartesian3::randomVector(0, 1);
 //            Cartesian3 dir = tempHp.normal+randomVec ;
-            Ray reflRay = reflectRay(ray, tempHp);
-            Ray refractRay = refractionRay(ray, tempHp);
+           // Ray reflRay = reflectRay(ray, tempHp);
+           // Ray refractRay = refractionRay(ray, tempHp);
 
             Cartesian3 Baycentric = BaycentricInterpolation(tempHp);
 
@@ -340,7 +376,7 @@ RGBAValue RaytraceRenderWidget::getHitColor(Ray &ray, HitList &objList, int dept
 
             //THis Is The Mark 2, Barycentric Interpolation
 //            std::cout<<normalInterpolation<<std::endl;
-
+            RGBAValue color;
             if(this->renderParameters->texturedRendering){
                 auto v0t = triptr->v0t;
                 auto v1t = triptr->v1t;
@@ -361,33 +397,57 @@ RGBAValue RaytraceRenderWidget::getHitColor(Ray &ray, HitList &objList, int dept
                 int intplV = (v0t.y*alpha + v1t.y*beta + v2t.y*gamma)*textureHeight;
 
                 auto textColor = (*textureDir)[intplV][intplU];
-                RGBAValue color = RGBAValue(textColor.red,textColor.green, textColor.blue);
-//                RGBAValue color(1-textColor.red,1-textColor.green, 1-textColor.blue);
-                if(this->renderParameters->reflectionEnabled==false &&
-                   this->renderParameters->refractionEnabled==false)
+                color = RGBAValue(textColor.red,textColor.green, textColor.blue);
+
+
+
+
+                if(renderParameters->phongEnabled){
                     return color;
-
-                RGBAValue mixLight;
-                if(this->renderParameters->refractionEnabled)
-                    mixLight = getHitColor(refractRay, objList, depth+1);
-
-                if(this->renderParameters->reflectionEnabled)
-                    mixLight = mixLight + getHitColor(reflRay, objList, depth + 1);
+                    //todo
+                }
 
 
-                return color.modulate(mixLight);
+
             }
 
 
+             auto normal = triptr->faceNormal;
+             Cartesian3 randomVec = Cartesian3::randomVector(-1, 1);
+             Cartesian3 dir = (tempHp.normal+randomVec).unit() ;
+             //diffuse
+             if(triptr->materialptr->transparency==0.f){
+                 if(triptr->materialptr->reflectivity == 0.f){
+                     return RGBAValue(0,0,0);
+                 }
+                 Ray newRay(tempHp.point, dir);
 
-//          double pdf = 1;
-//          RGBAValue color;
-//          RGBAValue emmited = tempHp.matptr->emmitted();
-//          auto scatterRay = tempHp.matptr->scatter(ray, tempHp, color, pdf);
+                 auto pdf = normal.dot(ray.direction().unit());
+                 return color + pdf *getHitColor(newRay, objList, depth+1);
+             }
 
-//          return emmited + color * tempHp.matptr->scatterPdf(scatterRay, tempHp, pdf) * getHitColor(scatterRay, objList, depth + 1) * (1 / pdf);
-            auto finalColor = 0.5*getHitColor(refractRay, objList, depth + 1)+0.4*getHitColor(reflRay, objList, depth + 1);
-            return  finalColor;
+//             Ray newRay(tempHp.point, dir);
+
+//             auto cos = normal.dot(ray.direction().unit());
+//             return color + cos *getHitColor(newRay, objList, depth+1);
+             auto direction = ray.direction().unit();
+             double cosTheta = std::fmin((direction * -1).dot(normal), 1.0);
+             double sinTheta = std::sqrt(1.0 - cosTheta*cosTheta);
+
+             float refractivity = 1.0/triptr->materialptr->indexOfRefraction;
+
+             bool reflected = refractivity * sinTheta > 1.0;
+                   if (reflected || reflectance(cosTheta, triptr->materialptr->indexOfRefraction) > nextReal<float>(0,1))
+                      direction = reflect(direction,normal);
+                   else
+                      direction = refract(direction,normal, refractivity);
+             Ray newRay(tempHp.point, direction);
+
+
+             //color.alpha = triptr->materialptr->transparency*255;
+
+
+             return getHitColor(newRay, objList, depth+1);
      }
 
 

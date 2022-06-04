@@ -34,7 +34,7 @@
 #include "raytrace/triangle.h"
 #include "raytrace/camera.h"
 #include "Matrix4.h"
-
+#include "random"
 
 // class for a render widget with arcball linked to an external arcball widget
 class RaytraceRenderWidget : public QOpenGLWidget										
