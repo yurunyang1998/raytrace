@@ -12,6 +12,7 @@ public:
     Cartesian3 v0n,v1n,v2n;
     Cartesian3 v0t,v1t,v2t;
     Material * materialptr;
+    std::string color;
     Triangle(Cartesian3 &v0_, Cartesian3 &v1_, Cartesian3 &v2_):v0(v0_), v1(v1_), v2(v2_){
 
 
