@@ -306,6 +306,16 @@ Ray RaytraceRenderWidget::refractionRay(Ray &inRay, HitPoint &hitPoint){
 }
 
 
+float fresnelSchlick(float inRayReflractionRatio, float outRayReflractionRatio, Cartesian3 inRayDir, Cartesian3 normal){
+
+    float R0 = (inRayReflractionRatio-outRayReflractionRatio)/(inRayReflractionRatio+outRayReflractionRatio);
+    R0*=R0;
+    float cosTheta = (-1*inRayDir).dot(normal);
+    return R0 + (1.0 - R0) * pow(1.0 - cosTheta, 5.0);
+
+
+}
+
 
 RGBAValue RaytraceRenderWidget::getHitColor(Ray &ray, HitList &objList, int depth)
 {
@@ -319,8 +329,9 @@ RGBAValue RaytraceRenderWidget::getHitColor(Ray &ray, HitList &objList, int dept
      if (objList.hit(ray, tempHp))
      {
 //           std::cout<<"hitted "<<tempHp.point<<std::endl;
-//            Cartesian3 randomVec = Cartesian3::randomVector(0, 1);
-//            Cartesian3 dir = tempHp.normal+randomVec ;
+            Cartesian3 randomVec = Cartesian3::randomVector(0, 1);
+            Cartesian3 dir = tempHp.normal+randomVec ;
+            Ray diffRay = Ray(tempHp.point,dir);
             Ray reflRay = reflectRay(ray, tempHp);
             Ray refractRay = refractionRay(ray, tempHp);
 
@@ -386,7 +397,28 @@ RGBAValue RaytraceRenderWidget::getHitColor(Ray &ray, HitList &objList, int dept
 //          auto scatterRay = tempHp.matptr->scatter(ray, tempHp, color, pdf);
 
 //          return emmited + color * tempHp.matptr->scatterPdf(scatterRay, tempHp, pdf) * getHitColor(scatterRay, objList, depth + 1) * (1 / pdf);
-            auto finalColor = 0.5*getHitColor(refractRay, objList, depth + 1)+0.4*getHitColor(reflRay, objList, depth + 1);
+
+            auto ior =  triptr->materialptr->indexOfRefraction;
+            auto normal = triptr->faceNormal;
+            float reflectionPropotion = fresnelSchlick(1.0, ior, ray.direction(), normal);
+            std::cout<<reflectionPropotion<<std::endl;
+
+            if(this->renderParameters->reflectionEnabled && this->renderParameters->refractionEnabled==false){
+                auto finalColor = getHitColor(reflRay, objList, depth + 1);//+getHitColor(diffRay, objList, depth + 1);
+                return finalColor;
+            }else if(this->renderParameters->refractionEnabled && this->renderParameters->reflectionEnabled==false)
+            {
+                auto finalColor = getHitColor(refractRay, objList, depth + 1);//+getHitColor(diffRay, objList, depth + 1);
+                return finalColor;
+
+            }
+            else if(this->renderParameters->reflectionEnabled && this->renderParameters->reflectionEnabled){
+                auto finalColor = (1-reflectionPropotion)*getHitColor(refractRay, objList, depth + 1)+(reflectionPropotion)*getHitColor(reflRay, objList, depth + 1);
+                return finalColor;
+            }
+
+
+            auto finalColor = getHitColor(diffRay, objList, depth + 1);
             return  finalColor;
      }
 
