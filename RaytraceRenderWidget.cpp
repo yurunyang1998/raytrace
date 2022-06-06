@@ -141,7 +141,7 @@ void RaytraceRenderWidget::RaytraceThread()
                 auto v = (j + rand() / (RAND_MAX + 1.0)) / (height - 1);
                 Ray ray = camera.castRay(u,v);
 
-                auto hitcolor = getHitColor(ray, scene, 0);
+                auto hitcolor = getHitColor(ray, scene, 1);
 //                std::cout<<color<<std::endl;
                 Cartesian3 hitColorCar(hitcolor.red, hitcolor.green, hitcolor.blue);
 
@@ -328,6 +328,9 @@ RGBAValue RaytraceRenderWidget::getHitColor(Ray &ray, HitList &objList, int dept
 
      if (objList.hit(ray, tempHp))
      {
+
+
+
 //           std::cout<<"hitted "<<tempHp.point<<std::endl;
             Cartesian3 randomVec = Cartesian3::randomVector(0, 1);
             Cartesian3 dir = tempHp.normal+randomVec ;
@@ -403,11 +406,27 @@ RGBAValue RaytraceRenderWidget::getHitColor(Ray &ray, HitList &objList, int dept
             float reflectionPropotion = fresnelSchlick(1.0, ior, ray.direction(), normal);
             std::cout<<reflectionPropotion<<std::endl;
 
+            std::random_device rd;
+            std::uniform_real_distribution<float> range(0, 1);
+            std::default_random_engine e{rd()};
+
+            float random = range(e);
+
             if(this->renderParameters->reflectionEnabled && this->renderParameters->refractionEnabled==false){
+
+                if(random > triptr->materialptr->reflectivity){ //diffuse
+                     float depthFloat = depth*1.0;
+                     return RGBAValue((depthFloat/N_BOUNCES)*255.0, (depthFloat/N_BOUNCES)*255.0,(depthFloat/N_BOUNCES)*255.0);
+                }
+                //mirror ray
                 auto finalColor = getHitColor(reflRay, objList, depth + 1);//+getHitColor(diffRay, objList, depth + 1);
                 return finalColor;
             }else if(this->renderParameters->refractionEnabled && this->renderParameters->reflectionEnabled==false)
             {
+                if(triptr->materialptr->transparency == 1.0 ){
+                    float depthFloat = depth*1.0;
+                    return RGBAValue((depthFloat/N_BOUNCES)*255.0, (depthFloat/N_BOUNCES)*255.0,(depthFloat/N_BOUNCES)*255.0);
+                }
                 auto finalColor = getHitColor(refractRay, objList, depth + 1);//+getHitColor(diffRay, objList, depth + 1);
                 return finalColor;
 
