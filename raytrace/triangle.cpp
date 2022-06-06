@@ -11,7 +11,7 @@ bool Triangle::hit(Ray &ray, double &min_t, double &closest_point, HitPoint &hit
     if(fabs(NdotRayDir)<1e-8)return false;
 
     float t = (N.dot(v0) + N.dot(ray.origin()))/NdotRayDir;
-    if(t<0 || t>closest_point)
+    if(t>closest_point)
         return false;
 
     Cartesian3 P = ray.origin() + t*ray.direction();
@@ -36,7 +36,7 @@ bool Triangle::hit(Ray &ray, double &min_t, double &closest_point, HitPoint &hit
         return false;
 
 
-    closest_point = t;
+//    closest_point = t;
     hitpoint.t = t;
     hitpoint.point = ray.point(t);
     hitpoint.normal = this->faceNormal;

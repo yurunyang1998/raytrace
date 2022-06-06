@@ -23,7 +23,7 @@
 // include the header file
 #include "RaytraceRenderWidget.h"
 
-#define N_LOOPS 2
+#define N_LOOPS 10
 #define N_BOUNCES 5
 
 // constructor
@@ -419,13 +419,15 @@ RGBAValue RaytraceRenderWidget::getHitColor(Ray &ray, HitList &objList, int dept
              float randProbability = range(e);
 
              //diffuse
-             if(randProbability > ior ){
+             if(randProbability > ior ||1 ){
                  Cartesian3 randomVec = Cartesian3::randomVector(0, 1);
                  Cartesian3 dir = (tempHp.normal+randomVec).unit() ;
                  Ray newRay(tempHp.point, dir);
                  auto pdf = normal.dot(ray.direction().unit());
-                 return color.modulate((getHitColor(newRay, objList, depth+1)));
-
+                 if(this->renderParameters->texturedRendering)
+                     return color.modulate((getHitColor(newRay, objList, depth+1)));
+                 else
+                     return 0.5*getHitColor(newRay, objList, depth+1);
             }else if(randProbability<=ior && randProbability>=reflectivity && this->renderParameters->refractionEnabled ){
                  // refraction
                  Ray refracRay = refractionRay(ray, tempHp);
