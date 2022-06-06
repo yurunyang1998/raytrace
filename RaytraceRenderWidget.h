@@ -82,7 +82,8 @@ class RaytraceRenderWidget : public QOpenGLWidget
     Cartesian3 BaycentricInterpolation(HitPoint &hitpoint);
     Ray reflectRay(Ray &inRay, HitPoint &hitPoint);
     Ray refractionRay(Ray &inRay, HitPoint &hitPoint);
-
+    bool inShadow(RGBAValue &color, std::vector<Light*> lights, HitList &objList, HitPoint hp);
+    Matrix4 modelview;
 
 	// mouse-handling
 	virtual void mousePressEvent(QMouseEvent *event);

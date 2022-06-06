@@ -437,8 +437,8 @@ RGBAValue RaytraceRenderWidget::getHitColor(Ray &ray, HitList &objList, int dept
                 int intplV = (v0t.y*alpha + v1t.y*beta + v2t.y*gamma)*textureHeight;
 
                 auto textColor = (*textureDir)[intplV][intplU];
-                color = RGBAValue(textColor.red,textColor.green, textColor.blue);
-//                RGBAValue color(1-textColor.red,1-textColor.green, 1-textColor.blue);
+//                color = RGBAValue(textColor.red,textColor.green, textColor.blue);
+                RGBAValue color(1-textColor.red,1-textColor.green, 1-textColor.blue);
                 if(this->renderParameters->reflectionEnabled==false &&
                    this->renderParameters->refractionEnabled==false)
                     return color;
