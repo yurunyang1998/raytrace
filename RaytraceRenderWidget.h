@@ -36,6 +36,7 @@
 #include "Matrix4.h"
 #include "random"
 #include "raytrace/sphere.h"
+#include "RGBAValue.h"
 
 // class for a render widget with arcball linked to an external arcball widget
 class RaytraceRenderWidget : public QOpenGLWidget										
@@ -83,6 +84,8 @@ class RaytraceRenderWidget : public QOpenGLWidget
     Cartesian3 BaycentricInterpolation(HitPoint &hitpoint);
     Ray reflectRay(Ray &inRay, HitPoint &hitPoint);
     Ray refractionRay(Ray &inRay, HitPoint &hitPoint);
+    bool inShadow(RGBAValue &color, std::vector<Light*> lights, HitList &objList, HitPoint hp);
+    Matrix4 modelview;
 
 
 	// mouse-handling

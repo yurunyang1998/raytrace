@@ -23,7 +23,7 @@
 // include the header file
 #include "RaytraceRenderWidget.h"
 
-#define N_LOOPS 10
+#define N_LOOPS 1
 #define N_BOUNCES 5
 
 // constructor
@@ -191,7 +191,10 @@ bool RaytraceRenderWidget::convertVectice2Triangle(std::vector<TexturedObject> *
     auto &textureCoords = textObjs->at(0).textureCoords;
     auto color = textObjs->at(0).material->name;
 
-    Matrix4 modelview;
+
+
+
+//    Matrix4 modelview;
     modelview.SetIdentity();
     if(this->renderParameters->centreObject){
 //        modelview = modelview;
@@ -340,6 +343,49 @@ RGBAValue colorByname(std::string name){
 
 }
 
+bool RaytraceRenderWidget::inShadow(RGBAValue &color, std::vector<Light*> lights, HitList &objList, HitPoint hp){
+
+    Triangle * triptr = dynamic_cast<Triangle *>(hp.objptr);
+    auto ambientMaterial = triptr->materialptr->ambient;
+    auto diffuseMaterial = triptr->materialptr->diffuse;
+    auto specularMaterial = triptr->materialptr->specular;
+    auto emissiveMaterial = triptr->materialptr->emissive;
+    Cartesian3 averagelightColor;
+    bool hitflag = false;
+    int hitLightNum=0.0;
+    for(auto light:lights){
+        Cartesian3 biasVec(1,1,1);
+        Cartesian3 lightPos = (modelview*light->GetPosition()).Vector();
+        Cartesian3 rayori = hp.point + biasVec*1e-8;
+        Cartesian3 reflecDir = (lightPos-rayori).unit();
+        Ray refleRay(rayori, reflecDir);
+        if(objList.hit(refleRay, hp)==false){
+           std::cout<<"shaowd ray"<<std::endl;
+
+           auto lightColor = light->GetColor().Vector();
+           averagelightColor[0] += lightColor.x*diffuseMaterial.x;
+           averagelightColor[1] += lightColor.y*diffuseMaterial.y;
+           averagelightColor[2] += lightColor.z*diffuseMaterial.z;
+
+//           averagelightColor[0]*=0.6;// += lightColor.x*diffuseMaterial.x;
+//           averagelightColor[1]*=0.6;// += lightColor.y*diffuseMaterial.y;
+//           averagelightColor[2]*=0.6;// += lightColor.z*diffuseMaterial.z;
+
+           hitflag = true;
+           hitLightNum+=1.0;
+        }
+    }
+    if(hitflag){
+        averagelightColor = averagelightColor/hitLightNum;
+        color.red *= averagelightColor.x;
+        color.green *= averagelightColor.y;
+        color.blue *= averagelightColor.z;
+    }
+    return hitflag;
+
+
+
+}
 
 RGBAValue RaytraceRenderWidget::getHitColor(Ray &ray, HitList &objList, int depth)
 {
@@ -407,6 +453,13 @@ RGBAValue RaytraceRenderWidget::getHitColor(Ray &ray, HitList &objList, int dept
             }
 
 
+            if(this->renderParameters->shadowsEnabled){
+                inShadow(color, this->renderParameters->lights, objList, tempHp);
+            }
+
+
+
+
              auto normal = triptr->faceNormal;
              float reflectivity = triptr->materialptr->reflectivity;
              float ior = 1-triptr->materialptr->indexOfRefraction;
@@ -419,15 +472,13 @@ RGBAValue RaytraceRenderWidget::getHitColor(Ray &ray, HitList &objList, int dept
              float randProbability = range(e);
 
              //diffuse
-             if(randProbability > ior ||1 ){
+             if(randProbability > ior ){
                  Cartesian3 randomVec = Cartesian3::randomVector(0, 1);
                  Cartesian3 dir = (tempHp.normal+randomVec).unit() ;
                  Ray newRay(tempHp.point, dir);
                  auto pdf = normal.dot(ray.direction().unit());
-                 if(this->renderParameters->texturedRendering)
-                     return color.modulate((getHitColor(newRay, objList, depth+1)));
-                 else
-                     return 0.5*getHitColor(newRay, objList, depth+1);
+                 return color.modulate((getHitColor(newRay, objList, depth+1)));
+
             }else if(randProbability<=ior && randProbability>=reflectivity && this->renderParameters->refractionEnabled ){
                  // refraction
                  Ray refracRay = refractionRay(ray, tempHp);
