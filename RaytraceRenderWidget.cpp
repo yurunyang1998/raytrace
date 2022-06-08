@@ -349,7 +349,7 @@ bool RaytraceRenderWidget::inShadow(RGBAValue &color, std::vector<Light*> lights
 
 
 
-
+// calcluate the proportion of reflection ray
 float fresnelSchlick(float inRayReflractionRatio, float outRayReflractionRatio, Cartesian3 inRayDir, Cartesian3 normal){
 
     float R0 = (inRayReflractionRatio-outRayReflractionRatio)/(inRayReflractionRatio+outRayReflractionRatio);
@@ -363,8 +363,10 @@ float fresnelSchlick(float inRayReflractionRatio, float outRayReflractionRatio, 
 
 RGBAValue RaytraceRenderWidget::getHitColor(Ray &ray, HitList &objList, int depth)
 {
-    if (depth > 5)
-         return 0.5*RGBAValue(255, 255, 255);
+    if (depth >= 5)
+    {
+        return  RGBAValue(255, 255, 255);
+    }    //         return
 
      HitPoint tempHp;
 
@@ -397,7 +399,9 @@ RGBAValue RaytraceRenderWidget::getHitColor(Ray &ray, HitList &objList, int dept
                                            triptr->v0n.z*alpha + triptr->v1n.z*beta + triptr->v2n.z*gamma);
 
             //THis Is The Mark 2, Barycentric Interpolation
-//            std::cout<<normalInterpolation<<std::endl;
+            if(this->renderParameters->interpolationRendering)
+                std::cout<<normalInterpolation<<std::endl;
+
 
             RGBAValue color;
             if(this->renderParameters->phongEnabled){
@@ -405,12 +409,16 @@ RGBAValue RaytraceRenderWidget::getHitColor(Ray &ray, HitList &objList, int dept
 
                auto light = this->renderParameters->lights[0];
                Cartesian3 lightPos = light->GetPosition().Vector();
+               lightPos = (modelview*light->GetPosition()).Vector();
 
-               auto distanceV0Light = 1.0/(triptr->v0-lightPos).length();
-               auto distanceV1Light = 1.0/(triptr->v1-lightPos).length();
-               auto distanceV2Light = 1.0/(triptr->v2-lightPos).length();
+               auto distanceV0Light = (triptr->v0-lightPos).length();
+               auto distanceV1Light = (triptr->v1-lightPos).length();
+               auto distanceV2Light = (triptr->v2-lightPos).length();
 
                auto distanceInterp = alpha*distanceV0Light + beta*distanceV1Light + gamma*distanceV2Light;
+
+               distanceInterp = 1.0/distanceInterp;
+//               std::cout<<distanceInterp<<std::endl;
                return RGBAValue(distanceInterp*255, distanceInterp*255, distanceInterp*255);
 
 
@@ -437,8 +445,8 @@ RGBAValue RaytraceRenderWidget::getHitColor(Ray &ray, HitList &objList, int dept
                 int intplV = (v0t.y*alpha + v1t.y*beta + v2t.y*gamma)*textureHeight;
 
                 auto textColor = (*textureDir)[intplV][intplU];
-                color = RGBAValue(textColor.red,textColor.green, textColor.blue);
-//                RGBAValue color(1-textColor.red,1-textColor.green, 1-textColor.blue);
+//                color = RGBAValue(textColor.red,textColor.green, textColor.blue);
+                RGBAValue color(1-textColor.red,1-textColor.green, 1-textColor.blue);
                 if(this->renderParameters->reflectionEnabled==false &&
                    this->renderParameters->refractionEnabled==false)
                     return color;
@@ -465,7 +473,7 @@ RGBAValue RaytraceRenderWidget::getHitColor(Ray &ray, HitList &objList, int dept
             auto ior =  triptr->materialptr->indexOfRefraction;
             auto normal = triptr->faceNormal;
             float reflectionPropotion = fresnelSchlick(1.0, ior, ray.direction(), normal);
-            std::cout<<reflectionPropotion<<std::endl;
+//            std::cout<<reflectionPropotion<<std::endl;
 
             std::random_device rd;
             std::uniform_real_distribution<float> range(0, 1);
@@ -484,10 +492,11 @@ RGBAValue RaytraceRenderWidget::getHitColor(Ray &ray, HitList &objList, int dept
                 return finalColor;
             }else if(this->renderParameters->refractionEnabled && this->renderParameters->reflectionEnabled==false)
             {
-                if(triptr->materialptr->transparency == 1.0 ){
+                if(triptr->materialptr->transparency == 1.0 ){ //if hit a transparent object
                     float depthFloat = depth*1.0;
                     return RGBAValue((depthFloat/N_BOUNCES)*255.0, (depthFloat/N_BOUNCES)*255.0,(depthFloat/N_BOUNCES)*255.0);
                 }
+                //otherwise, refraction ray
                 auto finalColor = getHitColor(refractRay, objList, depth + 1);//+getHitColor(diffRay, objList, depth + 1);
                 return finalColor;
 
@@ -497,16 +506,23 @@ RGBAValue RaytraceRenderWidget::getHitColor(Ray &ray, HitList &objList, int dept
                 return finalColor;
             }
 
+            float depthF =(1.0*depth)/N_BOUNCES;
+            RGBAValue  grayScale = 0.5*RGBAValue(255, 255, 255);
 
-            auto finalColor = getHitColor(diffRay, objList, depth + 1);
-            return  finalColor;
+            auto finalColor =  getHitColor(diffRay, objList, depth + 1);
+            finalColor = finalColor.modulate(grayScale);
+            if(depth==1)
+                return RGBAValue(255,255,255)-finalColor;
+            else
+                return  finalColor;
      }
 
 
      Cartesian3 unit_direction = ray.direction().unit();
      auto t = 0.5 * (unit_direction.y + 1.0);
      // cout<<t<<endl;
-     auto color = (1.0 - t) * RGBAValue(255, 255, 255) + t * RGBAValue(0.12 * 255, 0.24 * 255, 0.2 * 255);
+     float depthF = (1.0*depth)/N_BOUNCES;
+     auto color = (1.0 - t) * RGBAValue(255, 255, 255) + t * RGBAValue(0.2 * 255, 0.2 * 255, 0.2 * 255);
 //     std::cerr<<color<<endl;
      return color;
 }

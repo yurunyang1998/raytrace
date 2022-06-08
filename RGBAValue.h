@@ -47,6 +47,7 @@ class RGBAValue
 // convenience routines for scalar multiplication and addition
 RGBAValue operator *(float scalar, const RGBAValue &colour);
 RGBAValue operator +(const RGBAValue &left, const RGBAValue &right);
+RGBAValue operator -(const RGBAValue &left, const RGBAValue &right);
 
 // stream input
 // WARNING - always sets alpha to 255
