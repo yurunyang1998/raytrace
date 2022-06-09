@@ -262,10 +262,14 @@ Cartesian3 RaytraceRenderWidget::BaycentricInterpolation(HitPoint &hitpoint){
     float lineConstant12 = normal12.dot(vertex1);
     float lineConstant20 = normal20.dot(vertex2);
 
+    float ndotv0 = normal12.dot(vertex0);
+    float ndotv1 = normal20.dot(vertex1);
+    float ndotv2 = normal01.dot(vertex2);
+
     // and compute the distance of each vertex from the opposing side
-    float distance0 = normal12.dot(vertex0) - lineConstant12;
-    float distance1 = normal20.dot(vertex1) - lineConstant20;
-    float distance2 = normal01.dot(vertex2) - lineConstant01;
+    float distance0 = ndotv0 - lineConstant12;
+    float distance1 = ndotv1 - lineConstant20;
+    float distance2 = ndotv2 - lineConstant01;
 
     float alpha = (normal12.dot(point) - lineConstant12) / distance0;
     float beta = (normal20.dot(point) - lineConstant20) / distance1;
@@ -365,7 +369,10 @@ RGBAValue RaytraceRenderWidget::getHitColor(Ray &ray, HitList &objList, int dept
 {
     if (depth >= 5)
     {
-        return  RGBAValue(255, 255, 255);
+        if(this->renderParameters->reflectionEnabled)
+            return RGBAValue(0,0,0);
+        else
+            return  RGBAValue(255, 255, 255);
     }    //         return
 
      HitPoint tempHp;
@@ -379,17 +386,20 @@ RGBAValue RaytraceRenderWidget::getHitColor(Ray &ray, HitList &objList, int dept
 
 //           std::cout<<"hitted "<<tempHp.point<<std::endl;
 
-
+            Triangle * triptr = dynamic_cast<Triangle*>(tempHp.objptr);
             Cartesian3 Baycentric = BaycentricInterpolation(tempHp);
 
             float alpha=Baycentric.x, beta=Baycentric.y, gamma=Baycentric.z;
             if ((alpha < 0.0) || (beta < 0.0) || (gamma < 0.0) || isnan(alpha) || isnan(beta) || isnan(gamma)){
+                if(this->renderParameters->interpolationRendering){
+                    auto normal = triptr->faceNormal.unit();
+                    return RGBAValue(normal.x*255.0, normal.y*255.0, normal.z*255.0);
+                }
 
                 std::cout<<"invalid "<<alpha<<" "<<beta<<" "<<gamma<<std::endl;
 //                return RGBAValue(0, 0, 0);
             }
 
-            Triangle * triptr = dynamic_cast<Triangle*>(tempHp.objptr);
             Cartesian3 normalInterpolation(triptr->v0n.x*alpha + triptr->v1n.x*beta + triptr->v2n.x*gamma,
                                            triptr->v0n.y*alpha + triptr->v1n.y*beta + triptr->v2n.y*gamma,
                                            triptr->v0n.z*alpha + triptr->v1n.z*beta + triptr->v2n.z*gamma);
