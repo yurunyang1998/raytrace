@@ -281,8 +281,8 @@ Cartesian3 RaytraceRenderWidget::BaycentricInterpolation(HitPoint &hitpoint){
 
 Ray RaytraceRenderWidget::reflectRay(Ray &inRay, HitPoint &hitPoint){
 
-    Triangle * triptr = dynamic_cast<Triangle *>(hitPoint.objptr);
-    Cartesian3 &normal = triptr->faceNormal;
+//    Triangle * triptr = dynamic_cast<Triangle *>(hitPoint.objptr);
+    Cartesian3 &normal = hitPoint.normal;
     auto reflectDir = 2*normal.dot(-1*inRay.direction())*normal + inRay.direction();
     return Ray(hitPoint.point, reflectDir);
 
@@ -378,11 +378,7 @@ RGBAValue RaytraceRenderWidget::getHitColor(Ray &ray, HitList &objList, int dept
 
 
 //           std::cout<<"hitted "<<tempHp.point<<std::endl;
-            Cartesian3 randomVec = Cartesian3::randomVector(0, 1);
-            Cartesian3 dir = tempHp.normal+randomVec ;
-            Ray diffRay = Ray(tempHp.point,dir);
-            Ray reflRay = reflectRay(ray, tempHp);
-            Ray refractRay = refractionRay(ray, tempHp);
+
 
             Cartesian3 Baycentric = BaycentricInterpolation(tempHp);
 
@@ -399,8 +395,22 @@ RGBAValue RaytraceRenderWidget::getHitColor(Ray &ray, HitList &objList, int dept
                                            triptr->v0n.z*alpha + triptr->v1n.z*beta + triptr->v2n.z*gamma);
 
             //THis Is The Mark 2, Barycentric Interpolation
-            if(this->renderParameters->interpolationRendering)
-                std::cout<<normalInterpolation<<std::endl;
+            if(this->renderParameters->interpolationRendering){
+                normalInterpolation = normalInterpolation.unit();
+                float nx = abs(normalInterpolation.x);
+                float ny = abs(normalInterpolation.y);
+                float nz = abs(normalInterpolation.z);
+
+                return RGBAValue(nx*255.0, ny*255.0, nz*255.0);
+
+            }
+
+
+            Cartesian3 randomVec = Cartesian3::randomVector(0, 1);
+            Cartesian3 dir = tempHp.normal+randomVec ;
+            Ray diffRay = Ray(tempHp.point,dir);
+            Ray reflRay = reflectRay(ray, tempHp);
+            Ray refractRay = refractionRay(ray, tempHp);
 
 
             RGBAValue color;
@@ -471,9 +481,11 @@ RGBAValue RaytraceRenderWidget::getHitColor(Ray &ray, HitList &objList, int dept
 
 
             auto ior =  triptr->materialptr->indexOfRefraction;
-            auto normal = triptr->faceNormal;
+            auto normal = tempHp.normal;
             float reflectionPropotion = fresnelSchlick(1.0, ior, ray.direction(), normal);
 //            std::cout<<reflectionPropotion<<std::endl;
+
+
 
             std::random_device rd;
             std::uniform_real_distribution<float> range(0, 1);
