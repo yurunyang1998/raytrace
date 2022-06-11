@@ -49,6 +49,7 @@ class RaytraceRenderWidget : public QOpenGLWidget
 
 	// An image to use as a framebuffer
 	RGBAImage frameBuffer;
+    float depestZ = 0.0;
 
 	public:
 	// constructor
