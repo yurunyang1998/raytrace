@@ -97,6 +97,16 @@ RGBAValue operator -(const RGBAValue &left, const RGBAValue &right)
                         ((float) left.alpha - (float) right.alpha));
     } // operator + ()
 
+bool operator ==(const RGBAValue &left, const RGBAValue &right){
+
+    if(left.red==right.red && left.green==right.green && left.blue==right.blue){
+        return true;
+    }
+    return false;
+
+}
+
+
 
 // colour modulation routine:
 // NB: this routine scales each component by 1/255.0, multiplies then inverts
