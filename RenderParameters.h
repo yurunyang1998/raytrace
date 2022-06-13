@@ -75,15 +75,25 @@ class RenderParameters
         scaleObject(false),
         orthoProjection(false)
         { // constructor
-        Light *l1  = new Light(Light::Point,Homogeneous4(0.4f,0.4f,0.4f,1.0f),
-                                      Homogeneous4(-0.35f,0,0.5f,1.0f),Homogeneous4(),Homogeneous4(),Homogeneous4());
 //        Light *l1  = new Light(Light::Point,Homogeneous4(0.4f,0.4f,0.4f,1.0f),
-//                                      Homogeneous4(-0.35f,0,-3.5f,1.0f),Homogeneous4(),Homogeneous4(),Homogeneous4());
+//                                      Homogeneous4(-0.35f,0,0.5f,1.0f),Homogeneous4(),Homogeneous4(),Homogeneous4());
+//        Light *l2 = new Light(Light::Point,Homogeneous4(0.4f,0.4f,0.4f,1.0f),
+//                                Homogeneous4(0.35f,0,0.5f,1.0f),Homogeneous4(),Homogeneous4(),Homogeneous4());
+//        Light *l3 = new Light(Light::Point,Homogeneous4(0.4f,0.4f,0.4f,1.0f),
+//                                     Homogeneous4(0.0,0.0f,0.5f,1.0f),Homogeneous4(),Homogeneous4(),Homogeneous4());
+
+
+
+        Light *l1  = new Light(Light::Point,Homogeneous4(0.4f,0.4f,0.4f,1.0f),
+                                      Homogeneous4(0.5f,0.5f,2.4f,1.0f),Homogeneous4(),Homogeneous4(),Homogeneous4());
 
         Light *l2 = new Light(Light::Point,Homogeneous4(0.4f,0.4f,0.4f,1.0f),
-                                Homogeneous4(0.35f,0,0.5f,1.0f),Homogeneous4(),Homogeneous4(),Homogeneous4());
+                                Homogeneous4(1.5f,1.4f,2.4f,1.0f),Homogeneous4(),Homogeneous4(),Homogeneous4());
         Light *l3 = new Light(Light::Point,Homogeneous4(0.4f,0.4f,0.4f,1.0f),
-                                     Homogeneous4(0.0,0.0f,0.5f,1.0f),Homogeneous4(),Homogeneous4(),Homogeneous4());
+                                     Homogeneous4(0.0,0.0f,2.4f,1.0f),Homogeneous4(),Homogeneous4(),Homogeneous4());
+
+
+
 
         l1->enabled = true;
         l2->enabled = true;

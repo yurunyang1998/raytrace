@@ -436,10 +436,10 @@ RGBAValue RaytraceRenderWidget::getHitColor(Ray &ray, HitList &objList, int &dep
 
 //                    Cartesian3 lightPos = light->GetPosition().Vector();
                     Cartesian3 lightPos = (modelview*light->GetPosition()).Vector();
-                    attenuation += (lightPos-tempHp.point).length();
+                    attenuation += 1.0/(lightPos-tempHp.point).length();
 
                 }
-                float grayscale = 1.0/attenuation;
+                float grayscale = /*1.0/*/attenuation;
                 return RGBAValue(grayscale*255.0, grayscale*255.0, grayscale*255.0);
 
 
@@ -507,20 +507,14 @@ RGBAValue RaytraceRenderWidget::getHitColor(Ray &ray, HitList &objList, int &dep
                     return RGBAValue(0,0,0);
                 }
                 //mirror ray
-                auto finalColor = getHitColor(reflRay, objList, depth);//+getHitColor(diffRay, objList, depth + 1);
-//                return finalColor;
+                auto finalColor = getHitColor(reflRay, objList, depth);
                 if(finalColor == RGBAValue(0,0,0)){
                     return finalColor;
                 }else{
                     std::cout<<depth<<std::endl;
-
                     float depthFloat = depth*1.0;
                     return RGBAValue((depthFloat/N_BOUNCES)*255.0, (depthFloat/N_BOUNCES)*255.0,(depthFloat/N_BOUNCES)*255.0);
-
-
                 }
-
-
 
             }else if(this->renderParameters->refractionEnabled && this->renderParameters->reflectionEnabled==false)
             {
@@ -533,13 +527,11 @@ RGBAValue RaytraceRenderWidget::getHitColor(Ray &ray, HitList &objList, int &dep
                 return finalColor;
 
             }
+
             else if(this->renderParameters->reflectionEnabled && this->renderParameters->reflectionEnabled){
                 auto finalColor = (1-reflectionPropotion)*getHitColor(refractRay, objList, depth)+(reflectionPropotion)*getHitColor(reflRay, objList, depth);
                 return finalColor;
             }
-
-
-
 
             if(this->renderParameters->centreObject &&  // just for task 1
                !this->renderParameters->interpolationRendering &&
