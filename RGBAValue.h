@@ -49,6 +49,7 @@ RGBAValue operator *(float scalar, const RGBAValue &colour);
 RGBAValue operator +(const RGBAValue &left, const RGBAValue &right);
 RGBAValue operator -(const RGBAValue &left, const RGBAValue &right);
 bool operator ==(const RGBAValue &left, const RGBAValue &right);
+RGBAValue operator /(const RGBAValue &left, float num);
 
 // stream input
 // WARNING - always sets alpha to 255

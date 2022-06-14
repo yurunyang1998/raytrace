@@ -190,6 +190,7 @@ bool RaytraceRenderWidget::convertVectice2Triangle(std::vector<TexturedObject> *
     auto &vertices = textObjs->at(0).vertices;
     auto &normals = textObjs->at(0).normals;
     auto &textureCoords = textObjs->at(0).textureCoords;
+//    auto color = textObjs->at(0).material->name;
 
     modelview.SetIdentity();
     if(this->renderParameters->centreObject){
@@ -232,6 +233,8 @@ bool RaytraceRenderWidget::convertVectice2Triangle(std::vector<TexturedObject> *
             tri->v0t = textureCoords[text->faceTexCoords[faceIndex][0]];
             tri->v1t = textureCoords[text->faceTexCoords[faceIndex][1]];
             tri->v2t = textureCoords[text->faceTexCoords[faceIndex][2]];
+
+            tri->color = text->material->name;
 
             this->triangleObjs.push_back(tri);
             faceIndex++;
@@ -314,7 +317,21 @@ Ray RaytraceRenderWidget::refractionRay(Ray &inRay, HitPoint &hitPoint){
 
 }
 
+RGBAValue colorByname(std::string name){
 
+    if(name=="red")
+        return RGBAValue(255, 0, 0);
+    if(name=="gray")
+        return RGBAValue(105,105,105);
+    if(name=="green")
+        return RGBAValue(0, 255, 0);
+    if(name=="blue")
+        return RGBAValue(0, 0, 255);
+    if(name=="brown")
+        return RGBAValue(218,165,32);
+    return RGBAValue(0,0,0);
+
+}
 
 bool RaytraceRenderWidget::inShadow(RGBAValue &color, std::vector<Light*> lights, HitList &objList, HitPoint hp){
 
@@ -323,12 +340,12 @@ bool RaytraceRenderWidget::inShadow(RGBAValue &color, std::vector<Light*> lights
     Cartesian3 averagelightColor;
     bool hitflag = false;
     int hitLightNum=0.0;
-    RGBAValue tempColor;
+    RGBAValue tempColor(0,0,0);
     for(auto light:lights){
 //        auto light = lights[0];
         hitflag = false;
         Cartesian3 biasVec(1,1,1);
-        Cartesian3 lightPos = (/*modelview**/light->GetPosition()).Vector();
+        Cartesian3 lightPos = (modelview*light->GetPosition()).Vector();
         Cartesian3 rayori = hp.point+ biasVec*1e-8;
         Cartesian3 reflecDir = (lightPos - rayori).unit();
         Ray rayTolight(rayori, reflecDir);
@@ -341,7 +358,9 @@ bool RaytraceRenderWidget::inShadow(RGBAValue &color, std::vector<Light*> lights
 
 
             }else{
-                tempColor = RGBAValue(1,1,255);
+                hitLightNum++;
+                Triangle * triptr = dynamic_cast<Triangle*>(shadowrecord.objptr);
+                tempColor = tempColor + colorByname(triptr->color);
                 hitflag = true;
             }
         }
@@ -350,7 +369,7 @@ bool RaytraceRenderWidget::inShadow(RGBAValue &color, std::vector<Light*> lights
 
     if(hitflag){  // in the shadow area
 
-        color = (tempColor);
+        color = (tempColor)/hitLightNum;
 
     }
     return hitflag;
@@ -384,7 +403,7 @@ RGBAValue RaytraceRenderWidget::getHitColor(Ray &ray, HitList &objList, int &dep
      HitPoint tempHp;
      depth++;
 
-
+     bool shadowHitflag = false;
      if (objList.hit(ray, tempHp))
      {
 
@@ -425,7 +444,7 @@ RGBAValue RaytraceRenderWidget::getHitColor(Ray &ray, HitList &objList, int &dep
             Ray refractRay = refractionRay(ray, tempHp);
 
 
-            RGBAValue color;//(1,255,1);
+            RGBAValue color = colorByname(triptr->color);//(1,255,1);
             if(this->renderParameters->phongEnabled){
 
                 float attenuation = 0;
@@ -482,7 +501,7 @@ RGBAValue RaytraceRenderWidget::getHitColor(Ray &ray, HitList &objList, int &dep
             }
 
             if(this->renderParameters->shadowsEnabled){
-                inShadow(color, this->renderParameters->lights, objList, tempHp);
+                shadowHitflag = inShadow(color, this->renderParameters->lights, objList, tempHp);
 //                return color;
             }
 
@@ -544,8 +563,9 @@ RGBAValue RaytraceRenderWidget::getHitColor(Ray &ray, HitList &objList, int &dep
 
             }
 
-//            if(this->renderParameters->shadowsEnabled)
-//                return color;
+            if(shadowHitflag)
+                return color;
+
             auto finalColor = color + 0.5*(getHitColor(diffRay, objList, depth));
             return  finalColor;
      }
