@@ -326,30 +326,28 @@ bool RaytraceRenderWidget::inShadow(RGBAValue &color, std::vector<Light*> lights
     RGBAValue tempColor;
     for(auto light:lights){
 //        auto light = lights[0];
-        hitflag = true;
+        hitflag = false;
         Cartesian3 biasVec(1,1,1);
-
-        Cartesian3 lightPos = (modelview*light->GetPosition()).Vector();
-        Cartesian3 rayori = hp.point;//+ biasVec*1e-8;
-        Cartesian3 reflecDir = (rayori - lightPos).unit();
+        Cartesian3 lightPos = (/*modelview**/light->GetPosition()).Vector();
+        Cartesian3 rayori = hp.point+ biasVec*1e-8;
+        Cartesian3 reflecDir = (lightPos - rayori).unit();
         Ray rayTolight(rayori, reflecDir);
-        if(objList.hit(rayTolight, hp)==false){ // in the light area
+        float lightDistance = (lightPos-rayori).length();
+        HitPoint shadowrecord;
+        if(objList.hit(rayTolight, shadowrecord)){ // in the shadow
+//            objList.hit(rayTolight, shadowrecord);
+            if((shadowrecord.point-rayori).length() <= 0.0001 /*&& (shadowrecord.point - hp.point).length() < lightDistance*/ )
+            {
 
-            int a;
 
-        }else{
-            if(!(hp.point == rayori)){
-                std::cout<<" in shadow "<<std::endl;
-//                tempColor =  tempColor.modulate(RGBAValue(244,1,1));// + (getHitColor(rayTolight,objList, 0));
-                tempColor = (RGBAValue(1,1,255));
-            }{
-                std::cout<<"same point"<<std::endl;
+            }else{
+                tempColor = RGBAValue(1,1,255);
+                hitflag = true;
             }
-
-
-
         }
+
     }
+
     if(hitflag){  // in the shadow area
 
         color = (tempColor);
@@ -548,8 +546,7 @@ RGBAValue RaytraceRenderWidget::getHitColor(Ray &ray, HitList &objList, int &dep
 
 //            if(this->renderParameters->shadowsEnabled)
 //                return color;
-            depth++;
-            auto finalColor =  color + (getHitColor(diffRay, objList, depth));
+            auto finalColor = color + 0.5*(getHitColor(diffRay, objList, depth));
             return  finalColor;
      }
 
@@ -557,10 +554,7 @@ RGBAValue RaytraceRenderWidget::getHitColor(Ray &ray, HitList &objList, int &dep
      Cartesian3 unit_direction = ray.direction().unit();
      auto t = 0.5 * (unit_direction.y + 1.0);
      // cout<<t<<endl;
-     float depthF = (1.0*depth)/N_BOUNCES;
      auto color = (1.0 - t) * RGBAValue(255, 255, 255) + t * RGBAValue(0.2 * 255, 0.2 * 255, 0.2 * 255);
-//     std::cerr<<color<<endl;
-//     auto color = RGBAValue(255,255,255);
      return color;
 }
 
