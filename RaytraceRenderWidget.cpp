@@ -319,6 +319,9 @@ Ray RaytraceRenderWidget::refractionRay(Ray &inRay, HitPoint &hitPoint){
 
 RGBAValue colorByname(std::string name){
 
+    if(name=="peach"){
+        return RGBAValue(255,218,185);
+    }
     if(name=="red")
         return RGBAValue(255, 0, 0);
     if(name=="gray")
