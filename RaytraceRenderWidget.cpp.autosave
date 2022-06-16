@@ -23,7 +23,7 @@
 // include the header file
 #include "RaytraceRenderWidget.h"
 
-#define N_LOOPS 10
+#define N_LOOPS 1
 #define N_BOUNCES 5
 
 // constructor
@@ -126,10 +126,6 @@ void RaytraceRenderWidget::RaytraceThread()
 
 //    Sphere *  s2 = new Sphere(Cartesian3(0, 0, -10), 1);
 //    scene.add(s2);
-    int nLoops = 1;
-    if(this->renderParameters->monteCarloEnabled){
-       nLoops = N_LOOPS;
-    }
 
      #pragma omp parallel for collapse(2) schedule(dynamic)
     for(int j = 0; j < frameBuffer.height; j++)
@@ -138,14 +134,14 @@ void RaytraceRenderWidget::RaytraceThread()
         for(int i = 0; i < frameBuffer.width; i++)
          {
             Cartesian3 pixelColor;
-            for(int loop = 0; loop < nLoops; loop++)
+            for(int loop = 0; loop < N_LOOPS; loop++)
             {
             //Your code goes here
                 auto u = (i + rand() / (RAND_MAX + 1.0)) / (width - 1);
                 auto v = (j + rand() / (RAND_MAX + 1.0)) / (height - 1);
                 Ray ray = camera.castRay(u,v);
-                int depth =0;
-                auto hitcolor = getHitColor(ray, scene, depth);
+
+                auto hitcolor = getHitColor(ray, scene, 1);
 //                std::cout<<color<<std::endl;
                 Cartesian3 hitColorCar(hitcolor.red, hitcolor.green, hitcolor.blue);
 
@@ -155,7 +151,7 @@ void RaytraceRenderWidget::RaytraceThread()
                      break;
                  }
             }
-            write_color(pixelColor, nLoops, i,j);
+            write_color(pixelColor, N_LOOPS, i,j);
         }
     }
 //        std::cout << " Done loop number " <<loop << std::endl;
@@ -188,13 +184,11 @@ void RaytraceRenderWidget::Raytrace()
 
 bool RaytraceRenderWidget::convertVectice2Triangle(std::vector<TexturedObject> * textObjs){
 
-    depestZ = 0.0;
     if(textObjs->size()==0)
         return false;
     auto &vertices = textObjs->at(0).vertices;
     auto &normals = textObjs->at(0).normals;
     auto &textureCoords = textObjs->at(0).textureCoords;
-//    auto color = textObjs->at(0).material->name;
 
     modelview.SetIdentity();
     if(this->renderParameters->centreObject){
@@ -238,15 +232,8 @@ bool RaytraceRenderWidget::convertVectice2Triangle(std::vector<TexturedObject> *
             tri->v1t = textureCoords[text->faceTexCoords[faceIndex][1]];
             tri->v2t = textureCoords[text->faceTexCoords[faceIndex][2]];
 
-            tri->color = text->material->name;
-
             this->triangleObjs.push_back(tri);
             faceIndex++;
-
-            float maxZ = fmin(v0.z, fmin(v1.z, v2.z));
-            if(maxZ < depestZ)
-                depestZ = maxZ;
-
         }
     }
     return true;
@@ -275,14 +262,10 @@ Cartesian3 RaytraceRenderWidget::BaycentricInterpolation(HitPoint &hitpoint){
     float lineConstant12 = normal12.dot(vertex1);
     float lineConstant20 = normal20.dot(vertex2);
 
-    float ndotv0 = normal12.dot(vertex0);
-    float ndotv1 = normal20.dot(vertex1);
-    float ndotv2 = normal01.dot(vertex2);
-
     // and compute the distance of each vertex from the opposing side
-    float distance0 = ndotv0 - lineConstant12;
-    float distance1 = ndotv1 - lineConstant20;
-    float distance2 = ndotv2 - lineConstant01;
+    float distance0 = normal12.dot(vertex0) - lineConstant12;
+    float distance1 = normal20.dot(vertex1) - lineConstant20;
+    float distance2 = normal01.dot(vertex2) - lineConstant01;
 
     float alpha = (normal12.dot(point) - lineConstant12) / distance0;
     float beta = (normal20.dot(point) - lineConstant20) / distance1;
@@ -298,14 +281,9 @@ Cartesian3 RaytraceRenderWidget::BaycentricInterpolation(HitPoint &hitpoint){
 
 Ray RaytraceRenderWidget::reflectRay(Ray &inRay, HitPoint &hitPoint){
 
-//    Triangle * triptr = dynamic_cast<Triangle *>(hitPoint.objptr);
-    Cartesian3 normal = hitPoint.normal.unit();
+    Triangle * triptr = dynamic_cast<Triangle *>(hitPoint.objptr);
+    Cartesian3 &normal = triptr->faceNormal;
     auto reflectDir = 2*normal.dot(-1*inRay.direction())*normal + inRay.direction();
-    reflectDir = reflectDir;
-
-//    std::cout<<"inray: " <<inRay.direction()<<" normal: "<<-1*normal<<" refle: "<< -1*reflectDir<<std::endl;
-
-
     return Ray(hitPoint.point, reflectDir);
 
 }
@@ -326,72 +304,52 @@ Ray RaytraceRenderWidget::refractionRay(Ray &inRay, HitPoint &hitPoint){
 
 }
 
-RGBAValue colorByname(std::string name){
 
-    if(name=="peach"){
-        return RGBAValue(255,218,185);
-    }
-    if(name=="red")
-        return RGBAValue(255, 0, 0);
-    if(name=="gray")
-        return RGBAValue(105,105,105);
-    if(name=="green")
-        return RGBAValue(0, 255, 0);
-    if(name=="blue")
-        return RGBAValue(0, 0, 255);
-    if(name=="brown")
-        return RGBAValue(218,165,32);
-    return RGBAValue(0,0,0);
-
-}
 
 bool RaytraceRenderWidget::inShadow(RGBAValue &color, std::vector<Light*> lights, HitList &objList, HitPoint hp){
 
     Triangle * triptr = dynamic_cast<Triangle *>(hp.objptr);
-
+    auto ambientMaterial = triptr->materialptr->ambient;
+    auto diffuseMaterial = triptr->materialptr->diffuse;
+    auto specularMaterial = triptr->materialptr->specular;
+    auto emissiveMaterial = triptr->materialptr->emissive;
     Cartesian3 averagelightColor;
     bool hitflag = false;
     int hitLightNum=0.0;
-    RGBAValue tempColor(0,0,0);
     for(auto light:lights){
-//        auto light = lights[0];
-        hitflag = false;
         Cartesian3 biasVec(1,1,1);
         Cartesian3 lightPos = (modelview*light->GetPosition()).Vector();
-        Cartesian3 rayori = hp.point+ biasVec*1e-8;
-        Cartesian3 reflecDir = (lightPos - rayori).unit();
-        Ray rayTolight(rayori, reflecDir);
-        float lightDistance = (lightPos-rayori).length();
-        HitPoint shadowrecord;
-        if(objList.hit(rayTolight, shadowrecord)){ // in the shadow
-//            objList.hit(rayTolight, shadowrecord);
-            if((shadowrecord.point-rayori).length() <= 0.0001 /*&& (shadowrecord.point - hp.point).length() < lightDistance*/ )
-            {
+        Cartesian3 rayori = hp.point + biasVec*1e-8;
+        Cartesian3 reflecDir = (rayori-lightPos).unit();
+        Ray refleRay(rayori, reflecDir);
+        if(objList.hit(refleRay, hp)==false){ // in the light area
+           std::cout<<"shaowd ray"<<std::endl;
 
+           auto lightColor = light->GetColor().Vector();
+           averagelightColor[0] += lightColor.x*diffuseMaterial.x;
+           averagelightColor[1] += lightColor.y*diffuseMaterial.y;
+           averagelightColor[2] += lightColor.z*diffuseMaterial.z;
 
-            }else{
-                hitLightNum++;
-                Triangle * triptr = dynamic_cast<Triangle*>(shadowrecord.objptr);
-                tempColor = tempColor + colorByname(triptr->color);
-                hitflag = true;
-            }
+           hitflag = true;
+           hitLightNum+=1.0;
         }
-
     }
-
-    if(hitflag){  // in the shadow area
-
-        color = (tempColor)/hitLightNum;
-
+    if(hitflag){
+        averagelightColor = averagelightColor/hitLightNum;
+        color.red *= averagelightColor.x;
+        color.green *= averagelightColor.y;
+        color.blue *= averagelightColor.z;
     }
     return hitflag;
+
+
 
 }
 
 
 
 
-// calcluate the proportion of reflection ray
+
 float fresnelSchlick(float inRayReflractionRatio, float outRayReflractionRatio, Cartesian3 inRayDir, Cartesian3 normal){
 
     float R0 = (inRayReflractionRatio-outRayReflractionRatio)/(inRayReflractionRatio+outRayReflractionRatio);
@@ -403,70 +361,58 @@ float fresnelSchlick(float inRayReflractionRatio, float outRayReflractionRatio, 
 }
 
 
-RGBAValue RaytraceRenderWidget::getHitColor(Ray ray, HitList &objList, int &depth)
+RGBAValue RaytraceRenderWidget::getHitColor(Ray &ray, HitList &objList, int depth)
 {
-    if (depth >= 5)
-    {
-//        if(this->renderParameters->reflectionEnabled || this->renderParameters->refractionEnabled)
-        return RGBAValue(0,0,0);
-
-    }    //         return
+    if (depth > 5)
+         return 0.5*RGBAValue(255, 255, 255);
 
      HitPoint tempHp;
 
-     bool shadowHitflag = false;
+
+
      if (objList.hit(ray, tempHp))
      {
 
-            depth++;
-            Triangle * triptr = dynamic_cast<Triangle*>(tempHp.objptr);
+
+
+//           std::cout<<"hitted "<<tempHp.point<<std::endl;
+            Cartesian3 randomVec = Cartesian3::randomVector(0, 1);
+            Cartesian3 dir = tempHp.normal+randomVec ;
+            Ray diffRay = Ray(tempHp.point,dir);
+            Ray reflRay = reflectRay(ray, tempHp);
+            Ray refractRay = refractionRay(ray, tempHp);
+
             Cartesian3 Baycentric = BaycentricInterpolation(tempHp);
 
             float alpha=Baycentric.x, beta=Baycentric.y, gamma=Baycentric.z;
             if ((alpha < 0.0) || (beta < 0.0) || (gamma < 0.0) || isnan(alpha) || isnan(beta) || isnan(gamma)){
-                if(this->renderParameters->interpolationRendering){
-                    auto normal = triptr->faceNormal.unit();
-                    return RGBAValue(normal.x*255.0, normal.y*255.0, normal.z*255.0);
-                }
 
-//                std::cout<<"invalid "<<alpha<<" "<<beta<<" "<<gamma<<std::endl;
+                std::cout<<"invalid "<<alpha<<" "<<beta<<" "<<gamma<<std::endl;
 //                return RGBAValue(0, 0, 0);
             }
 
+            Triangle * triptr = dynamic_cast<Triangle*>(tempHp.objptr);
             Cartesian3 normalInterpolation(triptr->v0n.x*alpha + triptr->v1n.x*beta + triptr->v2n.x*gamma,
                                            triptr->v0n.y*alpha + triptr->v1n.y*beta + triptr->v2n.y*gamma,
                                            triptr->v0n.z*alpha + triptr->v1n.z*beta + triptr->v2n.z*gamma);
 
             //THis Is The Mark 2, Barycentric Interpolation
-            if(this->renderParameters->interpolationRendering){
-                normalInterpolation = normalInterpolation.unit();
-                float nx = abs(normalInterpolation.x);
-                float ny = abs(normalInterpolation.y);
-                float nz = abs(normalInterpolation.z);
+//            std::cout<<normalInterpolation<<std::endl;
 
-                return RGBAValue(nx*255.0, ny*255.0, nz*255.0);
-
-            }
-
-            Cartesian3 randomVec = Cartesian3::randomVector(0, 1);
-            Cartesian3 dir = tempHp.normal+randomVec ;
-
-
-
-            RGBAValue color = colorByname(triptr->color);//(1,255,1);
+            RGBAValue color;
             if(this->renderParameters->phongEnabled){
 
-                float attenuation = 0;
-                for(auto light: this->renderParameters->lights){
 
+               auto light = this->renderParameters->lights[0];
+               Cartesian3 lightPos = light->GetPosition().Vector();
 
-//                    Cartesian3 lightPos = light->GetPosition().Vector();
-                    Cartesian3 lightPos = (modelview*light->GetPosition()).Vector();
-                    attenuation += 1.0/(lightPos-tempHp.point).length();
+               auto distanceV0Light = 1.0/(triptr->v0-lightPos).length();
+               auto distanceV1Light = 1.0/(triptr->v1-lightPos).length();
+               auto distanceV2Light = 1.0/(triptr->v2-lightPos).length();
 
-                }
-                float grayscale = /*1.0/*/attenuation;
-                return RGBAValue(grayscale*255.0, grayscale*255.0, grayscale*255.0);
+               auto distanceInterp = alpha*distanceV0Light + beta*distanceV1Light + gamma*distanceV2Light;
+               return RGBAValue(distanceInterp*255, distanceInterp*255, distanceInterp*255);
+
 
 
             }
@@ -498,20 +444,28 @@ RGBAValue RaytraceRenderWidget::getHitColor(Ray ray, HitList &objList, int &dept
                     return color;
 
                 RGBAValue mixLight;
+                if(this->renderParameters->refractionEnabled)
+                    mixLight = getHitColor(refractRay, objList, depth+1);
+
+                if(this->renderParameters->reflectionEnabled)
+                    mixLight = mixLight + getHitColor(reflRay, objList, depth + 1);
 
 
-                color = color.modulate(mixLight);
-                return color;
+                return color.modulate(mixLight);
             }
+
+
 
             if(this->renderParameters->shadowsEnabled){
-                shadowHitflag = inShadow(color, this->renderParameters->lights, objList, tempHp);
-//                return color;
+                inShadow(color, this->renderParameters->lights, objList, tempHp);
             }
 
-//            std::cout<<reflectionPropotion<<std::endl;
 
 
+            auto ior =  triptr->materialptr->indexOfRefraction;
+            auto normal = triptr->faceNormal;
+            float reflectionPropotion = fresnelSchlick(1.0, ior, ray.direction(), normal);
+            std::cout<<reflectionPropotion<<std::endl;
 
             std::random_device rd;
             std::uniform_real_distribution<float> range(0, 1);
@@ -519,62 +473,32 @@ RGBAValue RaytraceRenderWidget::getHitColor(Ray ray, HitList &objList, int &dept
 
             float random = range(e);
 
+            if(this->renderParameters->reflectionEnabled && this->renderParameters->refractionEnabled==false){
 
-            Ray diffRay = Ray(tempHp.point,dir);
-            Ray reflRay = reflectRay(ray, tempHp);
-            Ray refractRay = refractionRay(ray, tempHp);
-
-            if(this->renderParameters->reflectionEnabled){
-
-                if(triptr->materialptr->reflectivity==0.0){ //diffuse
-                    return RGBAValue(0,0,0);
+                if(random > triptr->materialptr->reflectivity){ //diffuse
+                     float depthFloat = depth*1.0;
+                     return RGBAValue((depthFloat/N_BOUNCES)*255.0, (depthFloat/N_BOUNCES)*255.0,(depthFloat/N_BOUNCES)*255.0);
                 }
                 //mirror ray
-                getHitColor(reflRay, objList, depth);
-//                std::cout<<depth<<std::endl;
-                float depthFloat = depth*1.0;
-                return triptr->materialptr->reflectivity * RGBAValue((depthFloat/N_BOUNCES)*255.0, (depthFloat/N_BOUNCES)*255.0,(depthFloat/N_BOUNCES)*255.0);
-//             }
-
-            }else if(this->renderParameters->refractionEnabled)
+                auto finalColor = getHitColor(reflRay, objList, depth + 1);//+getHitColor(diffRay, objList, depth + 1);
+                return finalColor;
+            }else if(this->renderParameters->refractionEnabled && this->renderParameters->reflectionEnabled==false)
             {
-                if(triptr->materialptr->transparency == 0.0 ){ //if hit a untransparent object
-                      return RGBAValue(0,0,0);
-
-                 }
-
-                  auto ior =  triptr->materialptr->indexOfRefraction;
-                  auto normal = tempHp.normal;
-                  float reflectionPropotion = fresnelSchlick(1.0, ior, ray.direction(), normal);
-                  getHitColor(refractRay, objList, depth);
-                  float depthFloat = (depth)*1.0;
-                  std::cout<<depthFloat<<std::endl;
-                  return reflectionPropotion * RGBAValue((depthFloat/N_BOUNCES)*255.0, (depthFloat/N_BOUNCES)*255.0,(depthFloat/N_BOUNCES)*255.0);
+                if(triptr->materialptr->transparency == 1.0 ){
+                    float depthFloat = depth*1.0;
+                    return RGBAValue((depthFloat/N_BOUNCES)*255.0, (depthFloat/N_BOUNCES)*255.0,(depthFloat/N_BOUNCES)*255.0);
+                }
+                auto finalColor = getHitColor(refractRay, objList, depth + 1);//+getHitColor(diffRay, objList, depth + 1);
+                return finalColor;
 
             }
-
-//            else if(this->renderParameters->reflectionEnabled && this->renderParameters->reflectionEnabled){
-//                auto finalColor = (1-reflectionPropotion)*getHitColor(refractRay, objList, depth)+(reflectionPropotion)*getHitColor(reflRay, objList, depth);
-//                return finalColor;
-//            }
-
-            if(this->renderParameters->centreObject &&  // just for task 1
-               !this->renderParameters->interpolationRendering &&
-               !this->renderParameters->phongEnabled &&
-               !this->renderParameters->shadowsEnabled &&
-               !this->renderParameters->texturedRendering &&
-               !this->renderParameters->reflectionEnabled &&
-               !this->renderParameters->refractionEnabled){
-
-                float fragmentDepth = tempHp.point.z / depestZ;
-                return RGBAValue(fragmentDepth*255.0, fragmentDepth*255.0, fragmentDepth*255.0);
-
+            else if(this->renderParameters->reflectionEnabled && this->renderParameters->reflectionEnabled){
+                auto finalColor = (1-reflectionPropotion)*getHitColor(refractRay, objList, depth + 1)+(reflectionPropotion)*getHitColor(reflRay, objList, depth + 1);
+                return finalColor;
             }
 
-            if(shadowHitflag)
-                return color;
 
-            auto finalColor = color + 0.5*(getHitColor(diffRay, objList, depth));
+            auto finalColor = getHitColor(diffRay, objList, depth + 1);
             return  finalColor;
      }
 
@@ -582,7 +506,8 @@ RGBAValue RaytraceRenderWidget::getHitColor(Ray ray, HitList &objList, int &dept
      Cartesian3 unit_direction = ray.direction().unit();
      auto t = 0.5 * (unit_direction.y + 1.0);
      // cout<<t<<endl;
-     auto color = (1.0 - t) * RGBAValue(255, 255, 255) + t * RGBAValue(0.2 * 255, 0.2 * 255, 0.2 * 255);
+     auto color = (1.0 - t) * RGBAValue(255, 255, 255) + t * RGBAValue(0.12 * 255, 0.24 * 255, 0.2 * 255);
+//     std::cerr<<color<<endl;
      return color;
 }
 

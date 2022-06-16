@@ -87,6 +87,32 @@ RGBAValue operator +(const RGBAValue &left, const RGBAValue &right)
                         ((float) left.alpha + (float) right.alpha));
     } // operator + ()
 
+
+RGBAValue operator -(const RGBAValue &left, const RGBAValue &right)
+    { // operator + ()
+    // compute new values, then use constructor to scale & clamp
+    return RGBAValue(   ((float) left.red   - (float) right.red),
+                        ((float) left.green - (float) right.green),
+                        ((float) left.blue  - (float) right.blue),
+                        ((float) left.alpha - (float) right.alpha));
+    } // operator + ()
+
+bool operator ==(const RGBAValue &left, const RGBAValue &right){
+
+    if(left.red==right.red && left.green==right.green && left.blue==right.blue){
+        return true;
+    }
+    return false;
+
+}
+
+RGBAValue operator /(const RGBAValue &left, float num){
+
+    return  RGBAValue(left.red/num, left.green/num, left.blue/3);
+
+}
+
+
 // colour modulation routine:
 // NB: this routine scales each component by 1/255.0, multiplies then inverts
 RGBAValue RGBAValue::modulate(const RGBAValue &right) const

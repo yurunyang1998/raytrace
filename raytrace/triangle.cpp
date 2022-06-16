@@ -40,38 +40,9 @@ bool Triangle::hit(Ray &ray, double &min_t, double &closest_point, HitPoint &hit
     hitpoint.t = t;
     hitpoint.point = ray.point(t);
     hitpoint.normal = this->faceNormal;
-
+    hitpoint.objptr = this;
 
     return true;
 
-
-
-
-
-    // Cartesian3 ori = ray.origin();
-    // Cartesian3 dir = ray.direction();
-    // Cartesian3 E1 = v1-v0;
-    // Cartesian3 E2 = v2-v0;
-    // Cartesian3 S = ori - v0;
-    // Cartesian3 S1 = dir.cross(E2);
-    // Cartesian3 S2 = S.cross(E1);
-
-    // double alpha = 1.0/S1.dot(E1);
-    // float t = S2.dot(E2)*alpha;
-    // float b1 = S1.dot(S)*alpha;
-    // float b2 = S2.dot(dir);
-    // if(t>=0 && b1>=0 && b2 >=0 &&(1-b1-b2)>0){
-    //     // if(t<min_t || t>closest_point)
-    //     //     return false;
-    //     closest_point = t;
-    //     hitpoint.t = t;
-    //     hitpoint.point = ray.point(t);
-    //     hitpoint.normal = this->faceNormal;
-    //     //TODO: complete hitpoint
-
-
-    //     return true;
-    // }
-    // return false;
 
 }
