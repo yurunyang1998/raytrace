@@ -524,42 +524,33 @@ RGBAValue RaytraceRenderWidget::getHitColor(Ray ray, HitList &objList, int &dept
             Ray reflRay = reflectRay(ray, tempHp);
             Ray refractRay = refractionRay(ray, tempHp);
 
-            if(this->renderParameters->reflectionEnabled && this->renderParameters->refractionEnabled==false){
+            if(this->renderParameters->reflectionEnabled){
 
                 if(triptr->materialptr->reflectivity==0.0){ //diffuse
                     return RGBAValue(0,0,0);
                 }
                 //mirror ray
                 getHitColor(reflRay, objList, depth);
-//                if(finalColor == RGBAValue(0,0,0)){
-//                    return finalColor;
-//                }else{
-                    std::cout<<depth<<std::endl;
-                    float depthFloat = depth*1.0;
-                    return triptr->materialptr->reflectivity * RGBAValue((depthFloat/N_BOUNCES)*255.0, (depthFloat/N_BOUNCES)*255.0,(depthFloat/N_BOUNCES)*255.0);
-//                }
+//                std::cout<<depth<<std::endl;
+                float depthFloat = depth*1.0;
+                return triptr->materialptr->reflectivity * RGBAValue((depthFloat/N_BOUNCES)*255.0, (depthFloat/N_BOUNCES)*255.0,(depthFloat/N_BOUNCES)*255.0);
+//             }
 
-            }else if(this->renderParameters->refractionEnabled && this->renderParameters->reflectionEnabled==false)
+            }else if(this->renderParameters->refractionEnabled)
             {
-                if(triptr->materialptr->transparency == 0.0 ){ //if hit a transparent object
-//                      auto finalColor = getHitColor(reflRay, objList, depth);
+                if(triptr->materialptr->transparency == 0.0 ){ //if hit a untransparent object
                       return RGBAValue(0,0,0);
 
-                 }else
-                {
+                 }
 
-                    auto ior =  triptr->materialptr->indexOfRefraction;
-                    auto normal = tempHp.normal;
-                    float reflectionPropotion = fresnelSchlick(1.0, ior, ray.direction(), normal);
+                  auto ior =  triptr->materialptr->indexOfRefraction;
+                  auto normal = tempHp.normal;
+                  float reflectionPropotion = fresnelSchlick(1.0, ior, ray.direction(), normal);
+                  getHitColor(refractRay, objList, depth);
+                  float depthFloat = (depth)*1.0;
+                  std::cout<<depthFloat<<std::endl;
+                  return reflectionPropotion * RGBAValue((depthFloat/N_BOUNCES)*255.0, (depthFloat/N_BOUNCES)*255.0,(depthFloat/N_BOUNCES)*255.0);
 
-                    if(random>reflectionPropotion){
-                        auto finalColor = getHitColor(refractRay, objList, depth);
-                    }
-                    float depthFloat = (depth-1)*1.0;
-                    return RGBAValue((depthFloat/N_BOUNCES)*255.0, (depthFloat/N_BOUNCES)*255.0,(depthFloat/N_BOUNCES)*255.0);
-
-
-                }
             }
 
 //            else if(this->renderParameters->reflectionEnabled && this->renderParameters->reflectionEnabled){
