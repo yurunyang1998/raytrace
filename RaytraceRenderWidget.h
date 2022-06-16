@@ -78,7 +78,7 @@ class RaytraceRenderWidget : public QOpenGLWidget
 
     bool convertVectice2Triangle(std::vector<TexturedObject> * textObjs);
     void readSceneObj(HitList &scene_);
-    RGBAValue getHitColor(Ray &ray, HitList &objList, int &depth);
+    RGBAValue getHitColor(Ray ray, HitList &objList, int &depth);
     void write_color(Cartesian3 pixel_color, int samples_per_pixel, int i, int j);
     Cartesian3 BaycentricInterpolation(HitPoint &hitpoint);
     Ray reflectRay(Ray &inRay, HitPoint &hitPoint);

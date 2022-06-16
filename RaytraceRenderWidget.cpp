@@ -23,7 +23,7 @@
 // include the header file
 #include "RaytraceRenderWidget.h"
 
-#define N_LOOPS 1
+#define N_LOOPS 10
 #define N_BOUNCES 5
 
 // constructor
@@ -126,6 +126,10 @@ void RaytraceRenderWidget::RaytraceThread()
 
 //    Sphere *  s2 = new Sphere(Cartesian3(0, 0, -10), 1);
 //    scene.add(s2);
+    int nLoops = 1;
+    if(this->renderParameters->monteCarloEnabled){
+       nLoops = N_LOOPS;
+    }
 
      #pragma omp parallel for collapse(2) schedule(dynamic)
     for(int j = 0; j < frameBuffer.height; j++)
@@ -134,7 +138,7 @@ void RaytraceRenderWidget::RaytraceThread()
         for(int i = 0; i < frameBuffer.width; i++)
          {
             Cartesian3 pixelColor;
-            for(int loop = 0; loop < N_LOOPS; loop++)
+            for(int loop = 0; loop < nLoops; loop++)
             {
             //Your code goes here
                 auto u = (i + rand() / (RAND_MAX + 1.0)) / (width - 1);
@@ -151,7 +155,7 @@ void RaytraceRenderWidget::RaytraceThread()
                      break;
                  }
             }
-            write_color(pixelColor, N_LOOPS, i,j);
+            write_color(pixelColor, nLoops, i,j);
         }
     }
 //        std::cout << " Done loop number " <<loop << std::endl;
@@ -295,8 +299,13 @@ Cartesian3 RaytraceRenderWidget::BaycentricInterpolation(HitPoint &hitpoint){
 Ray RaytraceRenderWidget::reflectRay(Ray &inRay, HitPoint &hitPoint){
 
 //    Triangle * triptr = dynamic_cast<Triangle *>(hitPoint.objptr);
-    Cartesian3 &normal = hitPoint.normal;
+    Cartesian3 normal = hitPoint.normal.unit();
     auto reflectDir = 2*normal.dot(-1*inRay.direction())*normal + inRay.direction();
+    reflectDir = reflectDir;
+
+//    std::cout<<"inray: " <<inRay.direction()<<" normal: "<<-1*normal<<" refle: "<< -1*reflectDir<<std::endl;
+
+
     return Ray(hitPoint.point, reflectDir);
 
 }
@@ -394,7 +403,7 @@ float fresnelSchlick(float inRayReflractionRatio, float outRayReflractionRatio, 
 }
 
 
-RGBAValue RaytraceRenderWidget::getHitColor(Ray &ray, HitList &objList, int &depth)
+RGBAValue RaytraceRenderWidget::getHitColor(Ray ray, HitList &objList, int &depth)
 {
     if (depth >= 5)
     {
@@ -404,13 +413,12 @@ RGBAValue RaytraceRenderWidget::getHitColor(Ray &ray, HitList &objList, int &dep
     }    //         return
 
      HitPoint tempHp;
-     depth++;
 
      bool shadowHitflag = false;
      if (objList.hit(ray, tempHp))
      {
 
-
+            depth++;
             Triangle * triptr = dynamic_cast<Triangle*>(tempHp.objptr);
             Cartesian3 Baycentric = BaycentricInterpolation(tempHp);
 
@@ -442,9 +450,7 @@ RGBAValue RaytraceRenderWidget::getHitColor(Ray &ray, HitList &objList, int &dep
 
             Cartesian3 randomVec = Cartesian3::randomVector(0, 1);
             Cartesian3 dir = tempHp.normal+randomVec ;
-            Ray diffRay = Ray(tempHp.point,dir);
-            Ray reflRay = reflectRay(ray, tempHp);
-            Ray refractRay = refractionRay(ray, tempHp);
+
 
 
             RGBAValue color = colorByname(triptr->color);//(1,255,1);
@@ -492,11 +498,6 @@ RGBAValue RaytraceRenderWidget::getHitColor(Ray &ray, HitList &objList, int &dep
                     return color;
 
                 RGBAValue mixLight;
-                if(this->renderParameters->refractionEnabled)
-                    mixLight = getHitColor(refractRay, objList, depth);
-
-                if(this->renderParameters->reflectionEnabled)
-                    mixLight = mixLight + getHitColor(reflRay, objList, depth);
 
 
                 color = color.modulate(mixLight);
@@ -508,9 +509,6 @@ RGBAValue RaytraceRenderWidget::getHitColor(Ray &ray, HitList &objList, int &dep
 //                return color;
             }
 
-            auto ior =  triptr->materialptr->indexOfRefraction;
-            auto normal = tempHp.normal;
-            float reflectionPropotion = fresnelSchlick(1.0, ior, ray.direction(), normal);
 //            std::cout<<reflectionPropotion<<std::endl;
 
 
@@ -521,37 +519,53 @@ RGBAValue RaytraceRenderWidget::getHitColor(Ray &ray, HitList &objList, int &dep
 
             float random = range(e);
 
+
+            Ray diffRay = Ray(tempHp.point,dir);
+            Ray reflRay = reflectRay(ray, tempHp);
+            Ray refractRay = refractionRay(ray, tempHp);
+
             if(this->renderParameters->reflectionEnabled && this->renderParameters->refractionEnabled==false){
 
-                if(random > triptr->materialptr->reflectivity && depth==1){ //diffuse
+                if(triptr->materialptr->reflectivity==0.0){ //diffuse
                     return RGBAValue(0,0,0);
                 }
                 //mirror ray
-                auto finalColor = getHitColor(reflRay, objList, depth);
-                if(finalColor == RGBAValue(0,0,0)){
-                    return finalColor;
-                }else{
+                getHitColor(reflRay, objList, depth);
+//                if(finalColor == RGBAValue(0,0,0)){
+//                    return finalColor;
+//                }else{
                     std::cout<<depth<<std::endl;
                     float depthFloat = depth*1.0;
-                    return RGBAValue((depthFloat/N_BOUNCES)*255.0, (depthFloat/N_BOUNCES)*255.0,(depthFloat/N_BOUNCES)*255.0);
-                }
+                    return triptr->materialptr->reflectivity * RGBAValue((depthFloat/N_BOUNCES)*255.0, (depthFloat/N_BOUNCES)*255.0,(depthFloat/N_BOUNCES)*255.0);
+//                }
 
             }else if(this->renderParameters->refractionEnabled && this->renderParameters->reflectionEnabled==false)
             {
-                if(triptr->materialptr->transparency == 1.0 ){ //if hit a transparent object
-                    float depthFloat = depth*1.0;
+                if(triptr->materialptr->transparency == 0.0 ){ //if hit a transparent object
+//                      auto finalColor = getHitColor(reflRay, objList, depth);
+                      return RGBAValue(0,0,0);
+
+                 }else
+                {
+
+                    auto ior =  triptr->materialptr->indexOfRefraction;
+                    auto normal = tempHp.normal;
+                    float reflectionPropotion = fresnelSchlick(1.0, ior, ray.direction(), normal);
+
+                    if(random>reflectionPropotion){
+                        auto finalColor = getHitColor(refractRay, objList, depth);
+                    }
+                    float depthFloat = (depth-1)*1.0;
                     return RGBAValue((depthFloat/N_BOUNCES)*255.0, (depthFloat/N_BOUNCES)*255.0,(depthFloat/N_BOUNCES)*255.0);
+
+
                 }
-                //otherwise, refraction ray
-                auto finalColor = getHitColor(refractRay, objList, depth);//+getHitColor(diffRay, objList, depth + 1);
-                return finalColor;
-
             }
 
-            else if(this->renderParameters->reflectionEnabled && this->renderParameters->reflectionEnabled){
-                auto finalColor = (1-reflectionPropotion)*getHitColor(refractRay, objList, depth)+(reflectionPropotion)*getHitColor(reflRay, objList, depth);
-                return finalColor;
-            }
+//            else if(this->renderParameters->reflectionEnabled && this->renderParameters->reflectionEnabled){
+//                auto finalColor = (1-reflectionPropotion)*getHitColor(refractRay, objList, depth)+(reflectionPropotion)*getHitColor(reflRay, objList, depth);
+//                return finalColor;
+//            }
 
             if(this->renderParameters->centreObject &&  // just for task 1
                !this->renderParameters->interpolationRendering &&
