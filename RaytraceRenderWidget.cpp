@@ -24,7 +24,7 @@
 #include "RaytraceRenderWidget.h"
 
 #define N_LOOPS 10
-#define N_BOUNCES 5
+#define N_BOUNCES 5.0
 
 // constructor
 RaytraceRenderWidget::RaytraceRenderWidget
@@ -364,7 +364,6 @@ bool RaytraceRenderWidget::inShadow(RGBAValue &color, std::vector<Light*> lights
         float lightDistance = (lightPos-rayori).length();
         HitPoint shadowrecord;
         if(objList.hit(rayTolight, shadowrecord)){ // in the shadow
-//            objList.hit(rayTolight, shadowrecord);
             if((shadowrecord.point-rayori).length() <= 0.0001 /*&& (shadowrecord.point - hp.point).length() < lightDistance*/ )
             {
 
@@ -506,7 +505,7 @@ RGBAValue RaytraceRenderWidget::getHitColor(Ray ray, HitList &objList, int &dept
 
             if(this->renderParameters->shadowsEnabled){
                 shadowHitflag = inShadow(color, this->renderParameters->lights, objList, tempHp);
-//                return color;
+                return color;
             }
 
 //            std::cout<<reflectionPropotion<<std::endl;
@@ -553,10 +552,7 @@ RGBAValue RaytraceRenderWidget::getHitColor(Ray ray, HitList &objList, int &dept
 
             }
 
-//            else if(this->renderParameters->reflectionEnabled && this->renderParameters->reflectionEnabled){
-//                auto finalColor = (1-reflectionPropotion)*getHitColor(refractRay, objList, depth)+(reflectionPropotion)*getHitColor(reflRay, objList, depth);
-//                return finalColor;
-//            }
+
 
             if(this->renderParameters->centreObject &&  // just for task 1
                !this->renderParameters->interpolationRendering &&
@@ -571,8 +567,7 @@ RGBAValue RaytraceRenderWidget::getHitColor(Ray ray, HitList &objList, int &dept
 
             }
 
-            if(shadowHitflag)
-                return color;
+
 
             auto finalColor = color + 0.5*(getHitColor(diffRay, objList, depth));
             return  finalColor;

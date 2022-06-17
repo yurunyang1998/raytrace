@@ -108,7 +108,7 @@ bool operator ==(const RGBAValue &left, const RGBAValue &right){
 
 RGBAValue operator /(const RGBAValue &left, float num){
 
-    return  RGBAValue(left.red/num, left.green/num, left.blue/3);
+    return  RGBAValue(left.red/num, left.green/num, left.blue/num);
 
 }
 
